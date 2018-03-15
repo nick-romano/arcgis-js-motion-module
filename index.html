@@ -1,0 +1,209 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://js.arcgis.com/3.23/esri/css/esri.css">
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.5/d3-legend.min.js"></script>
+    <script src="https://js.arcgis.com/3.23/"></script>
+</head>
+
+<body>
+    <div id=map style='height:100%'></div>
+</body>
+<script>
+require([
+    "esri/map",
+    "esri/layers/FeatureLayer",
+    "dojo/_base/array",
+    "dojo/dom",
+    "dojo/number",
+    "dojo/on",
+    "dojo/parser",
+    "dojo/ready",
+    "esri/renderers/SimpleRenderer",
+    "esri/symbols/SimpleMarkerSymbol"
+], function(Map, FeatureLayer, array, dom, number, on, parser, ready, SimpleRenderer, SimpleMarkerSymbol) {
+    parser.parse();
+
+    ready(function() {
+        map = new Map("map", {
+            basemap: "gray",
+            center: [-76.942557, 38.986114],
+            zoom: 16
+        })
+
+        fLayer = new FeatureLayer("https://maps.umd.edu/arcgis/rest/services/Layers/Transportation/MapServer/4", {
+            id: "state1"
+        });
+
+        state2 = new FeatureLayer("https://maps.umd.edu/arcgis/rest/services/Layers/Transportation/MapServer/3", {
+            id: "state2"
+        });
+
+        fLayer.setRenderer(new SimpleRenderer(new SimpleMarkerSymbol().setSize(0)));
+
+        state2.setRenderer(new SimpleRenderer(new SimpleMarkerSymbol().setSize(0)));
+
+        on(fLayer, "graphic-draw", function(evt) {
+            var attrs = evt.graphic.attributes,
+                avariable = attrs.OBJECTID,
+                layer = "state1"
+            evt.node.setAttribute("objectid", avariable);
+            evt.node.setAttribute("layer", layer);
+            //updateState();
+        });
+
+        on(state2, "graphic-draw", function(evt) {
+            var attrs = evt.graphic.attributes,
+                avariable = attrs.OBJECTID,
+                layer = "state2";
+            evt.node.setAttribute("objectid", avariable);
+            evt.node.setAttribute("layer", layer)
+            //updateState()
+        });
+
+        on(map, "update-end", function(evt) {
+            console.log(evt);
+
+            if (typeof(inter) != "undefined") {
+                window.clearInterval(inter);
+            }
+            
+            updateState();
+
+            inter = setInterval(updateState, 6000);
+
+        })
+
+
+        map.addLayer(fLayer);
+        map.addLayer(state2)
+
+        function updateState() {
+            q = d3.selectAll('.markers');
+            p = d3.selectAll(".paths");
+            q.remove();
+            p.remove();
+
+
+            state1 = Array.from(d3.selectAll('circle')["_groups"][0]).filter(function(d) { if (d3.select(d).attr("layer") == "state1") { return d3.select(d).attr("objectid") } })
+            			.map(function(d) { return { id: d.getAttribute("objectid"), x: d.cx.animVal.value, y: d.cy.animVal.value } });
+            
+            state2 = Array.from(d3.selectAll('circle')["_groups"][0]).filter(function(d) { if (d3.select(d).attr("layer") == "state2") { return d3.select(d).attr("objectid") } })
+            			.map(function(d) { return { id: d.getAttribute("objectid"), x: d.cx.animVal.value, y: d.cy.animVal.value } });
+
+
+            //var point1_state1 = { x: state1[0].cx.animVal.value, y: state1[0].cy.animVal.value };
+
+            //var point2_state2 = { x: state2[0].cx.animVal.value, y: state2[0].cy.animVal.value };
+
+            lineData = [];
+
+            for (var i = 0; i < state1.length; i++) {
+                var objid = state1[i]["id"];
+                for (var j = 0; j < state2.length; j++) {
+                    if (objid == state2[j]["id"]) {
+                        lineData.push([state1[i], state2[j]])
+                    }
+                }
+            };
+
+
+            var svg = d3.select("svg");
+
+            svg.append("div")
+            	.attr("id", "legend")
+           
+           	var leg = d3.select('#legend').append('svg')
+
+            var quantize = d3.scaleQuantize()
+                    .domain([0, 1600])
+                    .range(["#247BA0", "#B2DBBF", "#FF1654"]);
+
+            leg.append("g")
+                .attr("class", "legendQuant")
+                .attr("transform", "translate(20,20)");
+
+            var colorLegend = d3.legendColor()
+                .labelFormat(d3.format(".2f"))
+                .useClass(true)
+                .scale(quantize);
+
+            leg.select(".legendQuant")
+                .call(colorLegend);
+
+
+
+            var lineFunction = d3.line()
+                .x(function(d) { return d.x })
+                .y(function(d) { return d.y })
+                .curve(d3.curveLinear);
+
+            var svg = d3.select("svg");
+
+            for (var i = 0; i < lineData.length; i++) {
+                var path = svg.append("path")
+                    .attr("d", lineFunction(lineData[i]))
+                    .attr("id", "path" + i)
+                    .attr("class", "paths")
+                    .attr('stroke', 'grey')
+                    .attr('fill', 'none')
+                    .attr('stroke-width', 2)
+                    .call(transition);
+
+                //var startPoint = pathStartPoint(path);
+
+                svg.append("circle")
+                    .attr("r", 7)
+                    .attr("id", "marker" + i)
+                    .attr("class", "markers")
+                //.attr("transform", "translate(" + 1 + ")");
+
+
+            }
+
+            //Get path start point for placing marker
+            function pathStartPoint(path) {
+                var d = path.attr("d"),
+                    dsplitted = d.split(" ");
+                return dsplitted[1];
+            }
+
+
+            function transition(path) {
+
+                path.transition()
+                    .duration(4500)
+                    .attrTween("stroke-dasharray", tweenDash)
+                //.each("end", function() { d3.select(this).call(transition)}); // infinite loop
+            }
+
+
+            function tweenDash() {
+                var c = d3.scaleQuantize()
+                    .domain([0, 1600])
+                    .range(["#247BA0", "#B2DBBF", "#FF1654"]);
+                var path = d3.select(this)
+                var l = path.node().getTotalLength();
+                var i = d3.interpolateString("0," + l, l + "," + l); // interpolation of stroke-dasharray style attr
+                //console.log(path)
+                return function(t) {
+                    var marker = d3.select("#marker" + path.node().getAttribute('id').split("ath")[1]);
+                    //console.log(path.node().getAttribute('id').slice(-1))
+                    var p = path.node().getPointAtLength(t * l);
+                    path.attr('stroke', c(l))
+                    marker.attr('fill', c(l))
+                    try {
+                        marker.attr("transform", "translate(" + p.x + "," + p.y + ")"); //move marker
+                    } catch (error) {
+                        console.log(error)
+                    }
+                    return i(t);
+                }
+            }
+        };
+
+    })
+
+})
+</script>
