@@ -1,0 +1,31 @@
+{
+  "name": "arcgis-js-motion-module",
+  "version": "1.0.0",
+  "description": "a dojo enabled module for visualizing motion within an ArcGIS for JavaScript Application",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nick-romano/arcgis-js-motion-module.git"
+  },
+  "author": "nick-romano",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nick-romano/arcgis-js-motion-module/issues"
+  },
+  "homepage": "https://github.com/nick-romano/arcgis-js-motion-module#readme",
+  "devDependencies": {
+    "dojo-typings": "^1.11.9",
+    "express": "^4.16.3",
+    "morgan": "^1.9.0",
+    "reload": "^2.2.2",
+    "tslint": "^5.9.1",
+    "watch": "^1.0.2"
+  },
+  "dependencies": {
+    "@types/arcgis-js-api": "^4.6.0",
+    "sockjs": "^0.3.19"
+  }
+}
