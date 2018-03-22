@@ -20,12 +20,17 @@
     <script>
 
     </script>
+    <script type="text/javascript">
+        var dojoConfig = {
+            paths: { scripts: location.pathname.replace(/\/[^/]+$/, "") + "/modules" }
+        };
+    </script>
     <script src="https://js.arcgis.com/4.6"></script>
 </head>
 
 <body>
     <div id="viewDiv"></div>
-    <script>require(["main.js"]);</script>
+    <script>require(["map.js"]);</script>
     <script>
         var sockjs_url = '/echo';
         var sock = new SockJS(sockjs_url);

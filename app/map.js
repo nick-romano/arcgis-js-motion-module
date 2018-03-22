@@ -2,7 +2,7 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "esri/layers/Fea
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var map = new EsriMap({
-        basemap: "streets"
+        basemap: "topo"
     });
     var view = new MapView({
         map: map,
@@ -12,7 +12,6 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "esri/layers/Fea
     });
     view.when(function () {
         var layer = new FeatureLayer({ url: "http://maps.umd.edu/arcgis/rest/services/Layers/Transportation/MapServer/4" });
-        console.log('it _works');
     });
 });
-//# sourceMappingURL=main.js.map
+//# sourceMappingURL=map.js.map
