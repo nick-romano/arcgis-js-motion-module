@@ -1,6 +1,7 @@
-define(["require", "exports", "esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer"], function (require, exports, EsriMap, MapView, FeatureLayer) {
+define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module.js", "./data.js"], function (require, exports, EsriMap, MapView, Motion, data) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    console.log(data);
     var map = new EsriMap({
         basemap: "topo"
     });
@@ -11,7 +12,8 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "esri/layers/Fea
         zoom: 12
     });
     view.when(function () {
-        var layer = new FeatureLayer({ url: "http://maps.umd.edu/arcgis/rest/services/Layers/Transportation/MapServer/4" });
+        var layer = new Motion.MotionLayer({ title: "My Day", source: data });
+        console.log(layer);
     });
 });
 //# sourceMappingURL=map.js.map
