@@ -24,10 +24,12 @@ define(["require", "exports", "esri/layers/Layer", "esri/core/accessorSupport/de
         }
         Object.defineProperty(MotionLayer.prototype, "features", {
             get: function () {
-                this.source.data.features.map(function (r) { return r.type = "dd"; });
-                this.source.geometry.
-                ;
-                return this.source;
+                var geom = this.source.data.features.map(function (r) { return r.geometry; });
+                geom.paths = geom.map(function (r) {
+                    var a = r.coordinates.map(function (a) { return a; });
+                    return a;
+                });
+                return geom;
             },
             enumerable: true,
             configurable: true

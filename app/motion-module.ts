@@ -1,4 +1,3 @@
-import EsriMap = require("esri/Map");
 import Layer = require("esri/layers/Layer");
 import { Point, Polygon, Polyline } from "esri/geometry";
 import { subclass, property, declared } from "esri/core/accessorSupport/decorators";
@@ -10,11 +9,14 @@ class MotionLayer extends declared(Layer) {
 
 
     get features(): object {
-        this.source.data.features.map(r => r.type = "dd");
-        this.source.geometry.
-        return this.source
+        var geom = this.source.data.features.map(r => r.geometry);
+        geom.paths = geom.map(r => {
+            var a = r.coordinates.map(a => a)
+            return a
+        });
+        return geom
     }
 
 }
 
-export {MotionLayer}
+export { MotionLayer }
