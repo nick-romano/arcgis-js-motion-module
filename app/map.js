@@ -13,6 +13,7 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
     });
     view.when(function () {
         var layer = new Motion.MotionLayer({ title: "My Day", source: data });
+        view.graphics.add(layer.LayerLines[0]);
         console.log(layer);
     });
 });

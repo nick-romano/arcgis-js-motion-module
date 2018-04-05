@@ -14,7 +14,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-define(["require", "exports", "esri/layers/Layer", "esri/core/accessorSupport/decorators"], function (require, exports, Layer, decorators_1) {
+define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbol", "esri/Graphic", "esri/geometry", "esri/core/accessorSupport/decorators"], function (require, exports, Layer, SimpleLineSymbol, Graphic, geometry_1, decorators_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var MotionLayer = /** @class */ (function (_super) {
@@ -34,9 +34,47 @@ define(["require", "exports", "esri/layers/Layer", "esri/core/accessorSupport/de
             enumerable: true,
             configurable: true
         });
+        Object.defineProperty(MotionLayer.prototype, "LayerPoints", {
+            get: function () {
+                var PointFeatures = this.features.filter(function (r) { return r.type === "Point" ? r : null; });
+                PointFeatures.Points = new Array;
+                PointFeatures.map(function (r) { return r.geometry = new geometry_1.Point(r.coordinates); });
+                return PointFeatures;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(MotionLayer.prototype, "LayerLines", {
+            get: function () {
+                var lineSymbol = new SimpleLineSymbol({
+                    color: [226, 119, 40],
+                    width: 4
+                });
+                var geom = this.source.data.features.map(function (r) { return r.geometry; });
+                geom.paths = geom.map(function (r) {
+                    var a = r.coordinates.map(function (a) { return a; });
+                    return a;
+                });
+                var LineFeatures = geom.filter(function (r) { return r.type === "LineString" ? r : null; });
+                LineFeatures.map(function (r) {
+                    r.geometry = new geometry_1.Polyline();
+                    r.type = "polyline";
+                    r.attributes = { a: "b" };
+                    r.coordinates.map(function (t) { return r.geometry.paths.push([t[0], t[1]]); });
+                    r.symbol = lineSymbol;
+                    r.graphic = new Graphic({ geometry: r.geometry, attributes: r.attributes, symbol: r.symbol });
+                });
+                return LineFeatures;
+            },
+            enumerable: true,
+            configurable: true
+        });
         __decorate([
             decorators_1.property()
         ], MotionLayer.prototype, "source", void 0);
+        __decorate([
+            decorators_1.property()
+        ], MotionLayer.prototype, "_LayerPoints", void 0);
         MotionLayer = __decorate([
             decorators_1.subclass("esri/layers/MotionLayer")
         ], MotionLayer);

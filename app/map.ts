@@ -21,5 +21,6 @@ const view = new MapView({
 
 view.when(function () {
     const layer = new Motion.MotionLayer({title: "My Day", source: data});
+    view.graphics.add(layer.LayerLines[0]);
     console.log(layer);
 });
