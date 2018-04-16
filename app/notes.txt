@@ -1,0 +1,8 @@
+events:
+hold, drag
+
+drag needs a timeout... or maybe there is a map event that is similar to 'update-end' (?)
+
+yes, you can use view.ready === true
+
+path2D object seems good...

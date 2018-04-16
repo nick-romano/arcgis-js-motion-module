@@ -14,17 +14,54 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbol", "esri/Graphic", "esri/geometry", "esri/core/accessorSupport/decorators"], function (require, exports, Layer, SimpleLineSymbol, Graphic, geometry_1, decorators_1) {
+define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbol", "esri/symbols/SimpleMarkerSymbol", "esri/Graphic", "esri/geometry", "esri/core/accessorSupport/decorators"], function (require, exports, Layer, SimpleLineSymbol, SimpleMarkerSymbol, Graphic, geometry_1, decorators_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var MotionLayer = /** @class */ (function (_super) {
         __extends(MotionLayer, _super);
-        function MotionLayer() {
-            return _super !== null && _super.apply(this, arguments) || this;
+        function MotionLayer(args) {
+            var _this = _super.call(this) || this;
+            _this.LayerLines = args["source"];
+            _this.LayerPoints = args["source"];
+            return _this;
         }
+        Object.defineProperty(MotionLayer.prototype, "LayerLines", {
+            get: function () {
+                return this._LayerLines;
+            },
+            set: function (value) {
+                try {
+                    var lineSymbol_1 = new SimpleLineSymbol({
+                        color: [226, 119, 40],
+                        width: 4
+                    });
+                    var geom = value["data"].features.map(function (r) { return r.geometry; });
+                    geom.paths = geom.map(function (r) {
+                        var a = r.coordinates.map(function (a) { return a; });
+                        return a;
+                    });
+                    var LineFeatures = geom.filter(function (r) { return r.type === "LineString" ? r : null; });
+                    LineFeatures.map(function (r) {
+                        r.geometry = new geometry_1.Polyline();
+                        r.type = "polyline";
+                        r.attributes = { a: "b" };
+                        r.geometry.paths[0] = [];
+                        r.coordinates.map(function (t) { return r.geometry.paths[0].push([t[0], t[1]]); });
+                        r.symbol = lineSymbol_1;
+                        r.graphic = new Graphic({ geometry: r.geometry, attributes: r.attributes, symbol: r.symbol });
+                    });
+                    this._LayerLines = LineFeatures;
+                }
+                catch (e) {
+                    console.error(e);
+                }
+            },
+            enumerable: true,
+            configurable: true
+        });
         Object.defineProperty(MotionLayer.prototype, "features", {
             get: function () {
-                var geom = this.source.data.features.map(function (r) { return r.geometry; });
+                var geom = this.source["data"].features.map(function (r) { return r.geometry; });
                 geom.paths = geom.map(function (r) {
                     var a = r.coordinates.map(function (a) { return a; });
                     return a;
@@ -36,35 +73,25 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         });
         Object.defineProperty(MotionLayer.prototype, "LayerPoints", {
             get: function () {
-                var PointFeatures = this.features.filter(function (r) { return r.type === "Point" ? r : null; });
-                PointFeatures.Points = new Array;
-                PointFeatures.map(function (r) { return r.geometry = new geometry_1.Point(r.coordinates); });
-                return PointFeatures;
+                return this._LayerPoints;
             },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(MotionLayer.prototype, "LayerLines", {
-            get: function () {
-                var lineSymbol = new SimpleLineSymbol({
-                    color: [226, 119, 40],
-                    width: 4
+            set: function (value) {
+                var geom = value["data"].features.map(function (r) { return r.geometry; });
+                var PointFeatures = geom.filter(function (r) { return r.type === "Point" ? r : null; });
+                var MarkerSymbol = new SimpleMarkerSymbol({
+                    color: "black",
+                    size: 16,
                 });
-                var geom = this.source.data.features.map(function (r) { return r.geometry; });
-                geom.paths = geom.map(function (r) {
-                    var a = r.coordinates.map(function (a) { return a; });
-                    return a;
+                PointFeatures.Points = new Array;
+                PointFeatures.map(function (r) {
+                    r.geometry = new geometry_1.Point(r.coordinates),
+                        r.type = "Point",
+                        // ! set up polyfill for attributes
+                        r.attributes = { 'blah': 'blah' },
+                        r.symbol = MarkerSymbol,
+                        r.graphic = new Graphic({ geometry: r.geometry, attributes: r.attributes, symbol: r.symbol });
                 });
-                var LineFeatures = geom.filter(function (r) { return r.type === "LineString" ? r : null; });
-                LineFeatures.map(function (r) {
-                    r.geometry = new geometry_1.Polyline();
-                    r.type = "polyline";
-                    r.attributes = { a: "b" };
-                    r.coordinates.map(function (t) { return r.geometry.paths.push([t[0], t[1]]); });
-                    r.symbol = lineSymbol;
-                    r.graphic = new Graphic({ geometry: r.geometry, attributes: r.attributes, symbol: r.symbol });
-                });
-                return LineFeatures;
+                this._LayerPoints = PointFeatures;
             },
             enumerable: true,
             configurable: true
@@ -74,7 +101,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         ], MotionLayer.prototype, "source", void 0);
         __decorate([
             decorators_1.property()
-        ], MotionLayer.prototype, "_LayerPoints", void 0);
+        ], MotionLayer.prototype, "_LayerLines", void 0);
         MotionLayer = __decorate([
             decorators_1.subclass("esri/layers/MotionLayer")
         ], MotionLayer);
