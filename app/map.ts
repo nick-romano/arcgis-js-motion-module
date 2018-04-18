@@ -16,24 +16,97 @@ const view = new MapView({
     zoom: 12
 });
 
-
-const customCanvas = (r) => {
+const insertCanvas = (r: any) => {
     setTimeout(() => {
-        console.log(r);
+        console.log('1')
         var canvas = document.querySelector('canvas');
-        if (canvas.getContext) {
-            var ctx = canvas.getContext('2d');
-            
-            for (var i = 0; i < 20; i++) {
-                for (var j = 0; j < 20; j++) {
-                    ctx.fillStyle = 'rgb(' + Math.floor(255 - 42.5 * i) + ', ' +
-                        Math.floor(255 - 42.5 * j) + ', 0)';
-                    ctx.fillRect(j * 25, i * 25, 25, 25);
-                    ctx.globalAlpha = 0.2;
-                }
+        var ctx = canvas.getContext('2d');
+        var raf;
+        var ball = {
+            x: 20,
+            y: 20,
+            vx: 5,
+            vy: 2,
+            radius: 25,
+            color: 'blue',
+            draw: function () {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+                ctx.closePath();
+                ctx.fillStyle = this.color;
+                ctx.fill();
             }
+        };
+
+        function draw() {
+            ctx.save();
+            //ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            ball.draw();
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+            raf = window.requestAnimationFrame(draw);
+            ctx.restore();
         }
-    }, 400)
+        view.on('pointer-enter', function (e) {
+            console.log('mouseover')
+            raf = window.requestAnimationFrame(draw);
+        });
+
+        view.on('pointer-leave', function (e) {
+            window.cancelAnimationFrame(raf);
+        });
+    })
+}
+
+
+const customCanvas = (r: any) => {
+    setTimeout(() => {
+        var proto = document.createElement("canvas");
+        var rootDiv = document.querySelector('g');
+        var ctx = proto.getContext("2d");
+        ctx.canvas.style.position = 'absolute';
+        ctx.canvas.style.zIndex = '100';
+        document.body.insertBefore(ctx.canvas, viewDiv)
+        ctx.canvas.width = 600;
+        ctx.canvas.height = 300;
+        var raf;
+
+        for(let elem of document.querySelectorAll('*')) {
+            elem.addEventListener("click", e => console.log(e), true);
+          }
+
+        var ball = {
+            x: 100,
+            y: 100,
+            vx: 5,
+            vy: 2,
+            radius: 25,
+            color: 'blue',
+            draw: function () {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+                ctx.closePath();
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+        };
+
+        function draw() {
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            ball.draw();
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+            raf = window.requestAnimationFrame(draw);
+        }
+        ctx.canvas.addEventListener('mouseover', function (e) {
+            raf = window.requestAnimationFrame(draw);
+        });
+
+        ctx.canvas.addEventListener('mouseout', function (e) {
+            window.cancelAnimationFrame(raf);
+        });
+
+    }, 400);
 }
 
 view.when(function () {
@@ -41,14 +114,21 @@ view.when(function () {
     const layer = new Motion.MotionLayer({ title: "My Day", source: data });
     view.graphics.add(layer.LayerLines[0].graphic);
 
+    console.log(view)
+    insertCanvas();
 
-    customCanvas();
-
+    view.on("mouseover", function (event) {
+        var screenPoint = {
+          x: event.x,
+          y: event.y
+        };
+        console.log(screenPoint)
+    }
 
 
 });
 
 
-view.on("drag", (r) => {
-    customCanvas(r);
-});
+// view.on("drag", (r) => {
+//     customCanvas(r);
+// });

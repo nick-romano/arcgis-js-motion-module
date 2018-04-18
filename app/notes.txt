@@ -6,3 +6,5 @@ drag needs a timeout... or maybe there is a map event that is similar to 'update
 yes, you can use view.ready === true
 
 path2D object seems good...
+
+can save() and restore() canvas states

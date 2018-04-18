@@ -23,7 +23,9 @@ sockjs_echo.on('connection', function (conn) {
             monitor.on("changed", function (f, curr, prev) {
                 // Handle file changes
                 console.log("a file has changed")
-                conn.write('reload')
+                setTimeout(() => {
+                    conn.write('reload')
+                }, 1000)
             })
             monitor.on("removed", function (f, stat) {
 
