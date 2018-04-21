@@ -40,10 +40,17 @@ const insertCanvas = (r: any) => {
 
         function draw() {
             ctx.save();
-            //ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
             ball.draw();
             ball.x += ball.vx;
             ball.y += ball.vy;
+
+            if (ball.y + ball.vy > canvas.height || ball.y + ball.vy < 0) {
+                ball.vy = -ball.vy;
+              }
+              if (ball.x + ball.vx > canvas.width || ball.x + ball.vx < 0) {
+                ball.vx = -ball.vx;
+              }
             raf = window.requestAnimationFrame(draw);
             ctx.restore();
         }
@@ -61,19 +68,17 @@ const insertCanvas = (r: any) => {
 
 const customCanvas = (r: any) => {
     setTimeout(() => {
+        var initCanvas = document.querySelector('.esri-display-object');
         var proto = document.createElement("canvas");
         var rootDiv = document.querySelector('g');
         var ctx = proto.getContext("2d");
         ctx.canvas.style.position = 'absolute';
         ctx.canvas.style.zIndex = '100';
-        document.body.insertBefore(ctx.canvas, viewDiv)
-        ctx.canvas.width = 600;
-        ctx.canvas.height = 300;
+        initCanvas.insertAdjacentElement('beforebegin', ctx.canvas)
+        // document.body.insertAdjacentElement(ctx.canvas, initCanvas)
+        ctx.canvas.width = initCanvas.width;
+        ctx.canvas.height = initCanvas.height;
         var raf;
-
-        for(let elem of document.querySelectorAll('*')) {
-            elem.addEventListener("click", e => console.log(e), true);
-          }
 
         var ball = {
             x: 100,
@@ -96,13 +101,21 @@ const customCanvas = (r: any) => {
             ball.draw();
             ball.x += ball.vx;
             ball.y += ball.vy;
+            if (ball.y + ball.vy > ctx.canvas.height || ball.y + ball.vy < 0) {
+                ball.vy = -ball.vy;
+              }
+              if (ball.x + ball.vx > ctx.canvas.width || ball.x + ball.vx < 0) {
+                ball.vx = -ball.vx;
+              }
             raf = window.requestAnimationFrame(draw);
         }
-        ctx.canvas.addEventListener('mouseover', function (e) {
+
+        view.on('pointer-enter', function (e) {
+            console.log('mouseover')
             raf = window.requestAnimationFrame(draw);
         });
 
-        ctx.canvas.addEventListener('mouseout', function (e) {
+        view.on('pointer-leave', function (e) {
             window.cancelAnimationFrame(raf);
         });
 
@@ -115,7 +128,7 @@ view.when(function () {
     view.graphics.add(layer.LayerLines[0].graphic);
 
     console.log(view)
-    insertCanvas();
+    customCanvas();
 
     view.on("mouseover", function (event) {
         var screenPoint = {
