@@ -7,4 +7,7 @@ yes, you can use view.ready === true
 
 path2D object seems good...
 
-can save() and restore() canvas states
+can save() and restore() canvas states;
+
+Current, and so far best, way to work with a custom canvas above the map:
+ initCanvas.insertAdjacentElement('beforebegin', ctx.canvas)
