@@ -1,4 +1,4 @@
-define(["require", "exports", "https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js", "esri/Map", "esri/views/MapView", "./motion-module.js", "./data.js", "esri/geometry"], function (require, exports, d3, EsriMap, MapView, Motion, data, geometry_1) {
+define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module.js", "./data.js", "esri/geometry"], function (require, exports, EsriMap, MapView, Motion, data, geometry_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var map = new EsriMap({
@@ -8,58 +8,8 @@ define(["require", "exports", "https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/
         map: map,
         container: "viewDiv",
         center: [-76.93, 38.9897],
-        zoom: 9
+        zoom: 10
     });
-    /*
-    const insertCanvas = (r: any) => {
-        setTimeout(() => {
-            console.log('1')
-            var canvas = document.querySelector('canvas');
-            var ctx = canvas.getContext('2d');
-            var raf;
-            var ball = {
-                x: 20,
-                y: 20,
-                vx: 5,
-                vy: 2,
-                radius: 25,
-                color: 'blue',
-                draw: function () {
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
-                    ctx.closePath();
-                    ctx.fillStyle = this.color;
-                    ctx.fill();
-                }
-            };
-    
-            function draw() {
-                ctx.save();
-                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-                ball.draw();
-                ball.x += ball.vx;
-                ball.y += ball.vy;
-    
-                if (ball.y + ball.vy > canvas.height || ball.y + ball.vy < 0) {
-                    ball.vy = -ball.vy;
-                }
-                if (ball.x + ball.vx > canvas.width || ball.x + ball.vx < 0) {
-                    ball.vx = -ball.vx;
-                }
-                raf = window.requestAnimationFrame(draw);
-                ctx.restore();
-            }
-            view.on('pointer-enter', function (e) {
-                console.log('mouseover')
-                raf = window.requestAnimationFrame(draw);
-            });
-    
-            view.on('pointer-leave', function (e) {
-                window.cancelAnimationFrame(raf);
-            });
-        })
-    }
-    */
     var initCustomGraphics = function (layer) {
         var initCanvas = document.querySelector('.esri-display-object');
         var proto = document.createElement("canvas");
@@ -97,8 +47,10 @@ define(["require", "exports", "https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/
             };
         var canvas = document.getElementById("motionLayer");
         var ctx = canvas.getContext("2d");
+        // window.cancelAnimationFrame();
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.lineCap = "round";
+        ctx.fillStyle = '#007ac2';
         // variable to hold how many frames have elapsed in the animation
         var t = 1;
         // define the path to plot
@@ -110,11 +62,11 @@ define(["require", "exports", "https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/
         });
         // set some style
         ctx.lineWidth = 2;
-        ctx.strokeStyle = "blue";
+        ctx.strokeStyle = '#007ac2';
         // calculate incremental points along the path
         var points = calcWaypoints(vertices);
         // extend the line from start to finish with animation
-        animate(points);
+        animate();
         // calc waypoints traveling along vertices
         function calcWaypoints(vertices) {
             var waypoints = [];
@@ -123,6 +75,8 @@ define(["require", "exports", "https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/
                 var pt1 = vertices[i];
                 var dx = pt1.x - pt0.x;
                 var dy = pt1.y - pt0.y;
+                // review this use of distance, but seems to smooth out transistion, 
+                // previously distance was replaced with the value 100
                 var distance = Math.sqrt(Math.pow(pt1.x - pt0.x, 2) + Math.pow(pt1.y - pt0.y, 2));
                 for (var j = 0; j < distance; j++) {
                     var x = pt0.x + dx * j / distance;
@@ -137,7 +91,7 @@ define(["require", "exports", "https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/
         }
         function animate() {
             if (t < points.length - 1) {
-                requestAnimationFrame(animate);
+                var anFrame = requestAnimationFrame(animate);
             }
             // draw a line segment from the last waypoint
             // to the current waypoint
@@ -148,6 +102,7 @@ define(["require", "exports", "https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/
             // increment "t" to get the next waypoint
             t++;
         }
+        view.on('drag', function (animate) { window.cancelAnimationFrame(animate); });
     }
     var addVertexes = function (layer) {
         var ctx = document.getElementById("motionLayer").getContext('2d');
@@ -156,7 +111,6 @@ define(["require", "exports", "https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/
             return view.toScreen(new geometry_1.Point(r));
         });
         var length = 0;
-        console.log(g);
         for (var i = 0; i < g.length; i++) {
             if (i < g.length - 1) {
                 var distance = Math.sqrt(Math.pow(g[i + 1].x - g[i].x, 2) + Math.pow(g[i + 1].y - g[i].y, 2));
@@ -165,31 +119,9 @@ define(["require", "exports", "https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/
         }
         ;
         console.log(length);
+        // draw just draw the line statically on the page
         function draw() {
-            console.log(d3);
             ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            /*
-            d3.transition()
-                .duration(5000)
-                .ease("linear")
-                .tween("zoom", function () {
-                    return function (t: any) {
-                        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-                        ctx.strokeStyle = '#aaa';
-                        ctx.fillStyle = '#ccc';
-                        ctx.beginPath();
-                        ctx.moveTo(g[0].x, g[0].y);
-                        for (var i = 0; i < g.length; i++) {
-                            ctx.lineTo(g[i].x, g[i].y);
-                        }
-                        ctx.lineWidth = 1;
-                        ctx.strokeStyle = 'rgba(120,60,60, 1)';
-                        ctx.setLineDash([length]);
-                        ctx.lineDashOffset = length * (1 - t);
-                        ctx.stroke();
-                    }
-                })
-            */
             ctx.beginPath();
             ctx.moveTo(g[0].x, g[0].y);
             for (var i = 0; i < g.length; i++) {
@@ -197,6 +129,7 @@ define(["require", "exports", "https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/
             }
             ctx.stroke();
         }
+        // Don't need to draw right now
         // draw();
         animate(g);
     };
@@ -211,7 +144,7 @@ define(["require", "exports", "https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/
             vx: 5,
             vy: 2,
             radius: 2,
-            color: 'blue',
+            color: '#007ac2',
             draw: function () {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
@@ -231,16 +164,8 @@ define(["require", "exports", "https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/
             if (ball.x + ball.vx > ctx.canvas.width || ball.x + ball.vx < 0) {
                 ball.vx = -ball.vx;
             }
-            raf = window.requestAnimationFrame(draw);
         }
         ball.draw();
-        // view.on('pointer-enter', function (e) {
-        //     console.log('mouseover')
-        //     raf = window.requestAnimationFrame(draw);
-        // });
-        // view.on('pointer-leave', function (e) {
-        //     window.cancelAnimationFrame(raf);
-        // });
     };
     view.when(function () {
         console.log('here');
