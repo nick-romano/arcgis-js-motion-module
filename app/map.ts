@@ -5,6 +5,7 @@ import FeatureLayer = require("esri/layers/FeatureLayer");
 import Motion = require("./motion-module.js");
 import data = require("./data.js");
 import { Point, Polygon, Polyline } from "esri/geometry";
+import lang = require("dojo/_base/lang");
 
 const map = new EsriMap({
     basemap: "topo"
@@ -29,11 +30,11 @@ const initCustomGraphics = (layer: object) => {
     initCanvas.insertAdjacentElement('beforebegin', ctx.canvas)
     ctx.canvas.width = initCanvas.width;
     ctx.canvas.height = initCanvas.height;
-    bouncingBall(layer);
+    // bouncingBall(layer);
     addVertexes(layer);
 }
 function animate(g: Array<Object>) {
-
+    let anFrame;
     var lastTime = 0;
     var vendors = ['ms', 'moz', 'webkit', 'o'];
     for (var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
@@ -86,6 +87,18 @@ function animate(g: Array<Object>) {
     // extend the line from start to finish with animation
     animate();
 
+    const removeAnim = view.on('drag', removeAnimation);
+    let iter = 0;
+    
+    function removeAnimation(event) {
+        console.log(iter)
+        iter += 1;
+        cancelAnimationFrame(anFrame);
+        console.log(event)
+        if(event.action === "end") {
+            removeAnim.remove();
+        }
+    }
 
     // calc waypoints traveling along vertices
     function calcWaypoints(vertices: Array<object>) {
@@ -114,7 +127,7 @@ function animate(g: Array<Object>) {
 
     function animate() {
         if (t < points.length - 1) {
-            var anFrame = requestAnimationFrame(animate);
+            anFrame = requestAnimationFrame(animate);
         }
         // draw a line segment from the last waypoint
         // to the current waypoint
@@ -125,13 +138,17 @@ function animate(g: Array<Object>) {
         // increment "t" to get the next waypoint
         t++;
     }
-
-    view.on('drag', (animate: number) => { window.cancelAnimationFrame(animate) })
 }
 
-const addVertexes = (layer: object) => {
+const addVertexes = (layer: any, event: object, change: object) => {
     var ctx = document.getElementById("motionLayer").getContext('2d');
+    ctx.restore();
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.save();
+    // ctx.translate(200,2)
+    if(change) {
+        // ctx.translate(change.x, change.y)
+    }
 
     const g = layer.LayerLines[0].graphic.geometry.paths[0].map((r: any) => {
         return view.toScreen(new Point(r));
@@ -144,8 +161,6 @@ const addVertexes = (layer: object) => {
             length += distance;
         }
     };
-
-    console.log(length)
     // draw just draw the line statically on the page
     function draw() {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -156,7 +171,6 @@ const addVertexes = (layer: object) => {
         }
         ctx.stroke();
     }
-
     // Don't need to draw right now
     // draw();
     animate(g);
@@ -166,71 +180,48 @@ const addVertexes = (layer: object) => {
 
 
 
-
-const bouncingBall = (layer: object) => {
-    // console.log('bounce')
-    var ctx = document.getElementById("motionLayer").getContext('2d');
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    var raf: any;
-    var ball = {
-        x: view.toScreen(layer.LayerPoints[1].geometry).x,
-        y: view.toScreen(layer.LayerPoints[1].geometry).y,
-        vx: 5,
-        vy: 2,
-        radius: 2,
-        color: '#007ac2',
-        draw: function () {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
-            ctx.closePath();
-            ctx.fillStyle = this.color;
-            ctx.fill();
-        }
-    };
-
-    function draw() {
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        ball.draw();
-        ball.x += ball.vx;
-        ball.y += ball.vy;
-        if (ball.y + ball.vy > ctx.canvas.height || ball.y + ball.vy < 0) {
-            ball.vy = -ball.vy;
-        }
-        if (ball.x + ball.vx > ctx.canvas.width || ball.x + ball.vx < 0) {
-            ball.vx = -ball.vx;
-        }
-    }
-    ball.draw();
-
-}
-
 view.when(function () {
     console.log('here')
-    const layer = new Motion.MotionLayer({ title: "My Day", source: data });
+    const layer = new Motion.MotionLayer({ title: "My Day", source: data, view: view });
     console.log(layer)
     view.graphics.add(layer.LayerLines[1].graphic);
 
     console.log(view)
-    initCustomGraphics(layer);
+    // initCustomGraphics(layer);
+    let start, end, change;
 
     view.on("drag", function (event) {
-        bouncingBall(layer);
-        addVertexes(layer);
+        if(event.action === "start") {
+            start = {x: event.x, y: event.y};
+        }else if(event.action === "end") {
+            end = { x: event.x, y: event.y };
+            change = {x: end.x - start.x, y: end.y - start.y }
+        }
+
+        if(change) {
+        addVertexes(layer, event, change);
+        }
     })
 
     view.on("pointer-down", function (event) {
-        bouncingBall(layer);
-        addVertexes(layer);
+        // addVertexes(layer);
+        // console.log(layer.mapView.updating)
     })
 
-    view.on("immediate-click", function (event) {
-        bouncingBall(layer);
-        addVertexes(layer);
+    view.on("resize", function (event) {
+        console.log('resize')
+        console.log(event);
+        addVertexes(layer, event, undefined)
     })
 
-    view.on("layerview-create", function (event) {
-        bouncingBall(layer);
-        addVertexes(layer);
-    })
+    // view.on("immediate-click", function (event) {
+    //     bouncingBall(layer);
+    //     addVertexes(layer);
+    // })
+
+    // view.on("layerview-create", function (event) {
+    //     bouncingBall(layer);
+    //     addVertexes(layer);
+    // })
 
 });

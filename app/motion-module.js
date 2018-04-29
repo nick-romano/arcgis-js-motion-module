@@ -23,6 +23,8 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             var _this = _super.call(this) || this;
             _this.LayerLines = args["source"];
             _this.LayerPoints = args["source"];
+            //start initializing layer
+            _this._initView(args.view);
             return _this;
         }
         Object.defineProperty(MotionLayer.prototype, "LayerLines", {
@@ -32,7 +34,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             set: function (value) {
                 try {
                     var lineSymbol_1 = new SimpleLineSymbol({
-                        color: [226, 119, 40],
+                        color: [255, 255, 255],
                         width: 4
                     });
                     var geom = value["data"].features.map(function (r) { return r.geometry; });
@@ -96,6 +98,151 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             enumerable: true,
             configurable: true
         });
+        MotionLayer.prototype._initView = function (view) {
+            try {
+                this.mapView = view;
+                this._initCustomGraphics(this);
+                this._initListeners();
+            }
+            catch (error) {
+                console.error(error);
+            }
+        };
+        MotionLayer.prototype._initListeners = function () {
+        };
+        MotionLayer.prototype._initCustomGraphics = function (layer) {
+            var initCanvas = document.querySelector('.esri-display-object');
+            var proto = document.createElement("canvas");
+            proto.id = "motionLayer";
+            var rootDiv = document.querySelector('g');
+            this.ctx = proto.getContext("2d");
+            this.ctx.canvas.style.position = 'absolute';
+            this.ctx.canvas.style.zIndex = '0';
+            initCanvas.insertAdjacentElement('beforebegin', this.ctx.canvas);
+            this.ctx.canvas.width = initCanvas.width;
+            this.ctx.canvas.height = initCanvas.height;
+            // bouncingBall(layer);
+            this._addVertexes(this, undefined, undefined);
+        };
+        MotionLayer.prototype._addVertexes = function (layer, event, change) {
+            var _this = this;
+            var g = layer.LayerLines[0].graphic.geometry.paths[0].map(function (r) {
+                return _this.mapView.toScreen(new geometry_1.Point(r));
+            });
+            var length = 0;
+            for (var i = 0; i < g.length; i++) {
+                if (i < g.length - 1) {
+                    var distance = Math.sqrt(Math.pow(g[i + 1].x - g[i].x, 2) + Math.pow(g[i + 1].y - g[i].y, 2));
+                    length += distance;
+                }
+            }
+            ;
+            // draw just draw the line statically on the page
+            function draw() {
+                this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+                this.ctx.beginPath();
+                this.ctx.moveTo(g[0].x, g[0].y);
+                for (var i = 0; i < g.length; i++) {
+                    this.ctx.lineTo(g[i].x, g[i].y);
+                }
+                this.ctx.stroke();
+            }
+            // Don't need to draw right now
+            // draw();
+            this._animate(g);
+        };
+        MotionLayer.prototype._animate = function (g) {
+            var _this = this;
+            var anFrame;
+            var lastTime = 0;
+            var vendors = ['ms', 'moz', 'webkit', 'o'];
+            for (var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+                window.requestAnimationFrame = window[vendors[x] + 'RequestAnimationFrame'];
+                window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame'] || window[vendors[x] + 'CancelRequestAnimationFrame'];
+            }
+            if (!window.requestAnimationFrame)
+                window.requestAnimationFrame = function (callback, element) {
+                    var currTime = new Date().getTime();
+                    var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+                    var id = window.setTimeout(function () {
+                        callback(currTime + timeToCall);
+                    }, timeToCall);
+                    lastTime = currTime + timeToCall;
+                    return id;
+                };
+            if (!window.cancelAnimationFrame)
+                window.cancelAnimationFrame = function (id) {
+                    clearTimeout(id);
+                };
+            // window.cancelAnimationFrame();
+            this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+            this.ctx.lineCap = "round";
+            this.ctx.fillStyle = 'red';
+            // variable to hold how many frames have elapsed in the animation
+            var t = 1;
+            // define the path to plot
+            var vertices = g.map(function (r) {
+                return {
+                    x: r.x,
+                    y: r.y
+                };
+            });
+            // set some style
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeStyle = 'red';
+            // calculate incremental points along the path
+            var points = calcWaypoints(vertices);
+            // extend the line from start to finish with animation
+            var removeAnim = this.mapView.on('drag', removeAnimation);
+            var iter = 0;
+            function removeAnimation(event) {
+                console.log(iter);
+                iter += 1;
+                cancelAnimationFrame(anFrame);
+                console.log(event);
+                if (event.action === "end") {
+                    removeAnim.remove();
+                }
+            }
+            // calc waypoints traveling along vertices
+            function calcWaypoints(vertices) {
+                var waypoints = [];
+                for (var i = 1; i < vertices.length; i++) {
+                    var pt0 = vertices[i - 1];
+                    var pt1 = vertices[i];
+                    var dx = pt1.x - pt0.x;
+                    var dy = pt1.y - pt0.y;
+                    // review this use of distance, but seems to smooth out transistion, 
+                    // previously distance was replaced with the value 100
+                    var distance = Math.sqrt(Math.pow(pt1.x - pt0.x, 2) + Math.pow(pt1.y - pt0.y, 2));
+                    for (var j = 0; j < distance; j++) {
+                        var x = pt0.x + dx * j / distance;
+                        var y = pt0.y + dy * j / distance;
+                        waypoints.push({
+                            x: x,
+                            y: y
+                        });
+                    }
+                }
+                return (waypoints);
+            }
+            var animate = function () {
+                if (t < points.length - 1) {
+                    animate = animate.bind(_this);
+                    anFrame = requestAnimationFrame(animate);
+                }
+                // draw a line segment from the last waypoint
+                // to the current waypoint
+                _this.ctx.beginPath();
+                _this.ctx.moveTo(points[t - 1].x, points[t - 1].y);
+                _this.ctx.lineTo(points[t].x, points[t].y);
+                _this.ctx.stroke();
+                // increment "t" to get the next waypoint
+                t++;
+            };
+            animate.bind(this);
+            animate();
+        };
         __decorate([
             decorators_1.property()
         ], MotionLayer.prototype, "source", void 0);

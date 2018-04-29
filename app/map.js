@@ -21,10 +21,11 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
         initCanvas.insertAdjacentElement('beforebegin', ctx.canvas);
         ctx.canvas.width = initCanvas.width;
         ctx.canvas.height = initCanvas.height;
-        bouncingBall(layer);
+        // bouncingBall(layer);
         addVertexes(layer);
     };
     function animate(g) {
+        var anFrame;
         var lastTime = 0;
         var vendors = ['ms', 'moz', 'webkit', 'o'];
         for (var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
@@ -67,6 +68,17 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
         var points = calcWaypoints(vertices);
         // extend the line from start to finish with animation
         animate();
+        var removeAnim = view.on('drag', removeAnimation);
+        var iter = 0;
+        function removeAnimation(event) {
+            console.log(iter);
+            iter += 1;
+            cancelAnimationFrame(anFrame);
+            console.log(event);
+            if (event.action === "end") {
+                removeAnim.remove();
+            }
+        }
         // calc waypoints traveling along vertices
         function calcWaypoints(vertices) {
             var waypoints = [];
@@ -91,7 +103,7 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
         }
         function animate() {
             if (t < points.length - 1) {
-                var anFrame = requestAnimationFrame(animate);
+                anFrame = requestAnimationFrame(animate);
             }
             // draw a line segment from the last waypoint
             // to the current waypoint
@@ -102,11 +114,16 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
             // increment "t" to get the next waypoint
             t++;
         }
-        view.on('drag', function (animate) { window.cancelAnimationFrame(animate); });
     }
-    var addVertexes = function (layer) {
+    var addVertexes = function (layer, event, change) {
         var ctx = document.getElementById("motionLayer").getContext('2d');
+        ctx.restore();
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.save();
+        // ctx.translate(200,2)
+        if (change) {
+            // ctx.translate(change.x, change.y)
+        }
         var g = layer.LayerLines[0].graphic.geometry.paths[0].map(function (r) {
             return view.toScreen(new geometry_1.Point(r));
         });
@@ -118,7 +135,6 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
             }
         }
         ;
-        console.log(length);
         // draw just draw the line statically on the page
         function draw() {
             ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -133,63 +149,43 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
         // draw();
         animate(g);
     };
-    var bouncingBall = function (layer) {
-        // console.log('bounce')
-        var ctx = document.getElementById("motionLayer").getContext('2d');
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        var raf;
-        var ball = {
-            x: view.toScreen(layer.LayerPoints[1].geometry).x,
-            y: view.toScreen(layer.LayerPoints[1].geometry).y,
-            vx: 5,
-            vy: 2,
-            radius: 2,
-            color: '#007ac2',
-            draw: function () {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
-                ctx.closePath();
-                ctx.fillStyle = this.color;
-                ctx.fill();
-            }
-        };
-        function draw() {
-            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            ball.draw();
-            ball.x += ball.vx;
-            ball.y += ball.vy;
-            if (ball.y + ball.vy > ctx.canvas.height || ball.y + ball.vy < 0) {
-                ball.vy = -ball.vy;
-            }
-            if (ball.x + ball.vx > ctx.canvas.width || ball.x + ball.vx < 0) {
-                ball.vx = -ball.vx;
-            }
-        }
-        ball.draw();
-    };
     view.when(function () {
         console.log('here');
-        var layer = new Motion.MotionLayer({ title: "My Day", source: data });
+        var layer = new Motion.MotionLayer({ title: "My Day", source: data, view: view });
         console.log(layer);
         view.graphics.add(layer.LayerLines[1].graphic);
         console.log(view);
-        initCustomGraphics(layer);
+        // initCustomGraphics(layer);
+        var start, end, change;
         view.on("drag", function (event) {
-            bouncingBall(layer);
-            addVertexes(layer);
+            if (event.action === "start") {
+                start = { x: event.x, y: event.y };
+            }
+            else if (event.action === "end") {
+                end = { x: event.x, y: event.y };
+                change = { x: end.x - start.x, y: end.y - start.y };
+            }
+            if (change) {
+                addVertexes(layer, event, change);
+            }
         });
         view.on("pointer-down", function (event) {
-            bouncingBall(layer);
-            addVertexes(layer);
+            // addVertexes(layer);
+            // console.log(layer.mapView.updating)
         });
-        view.on("immediate-click", function (event) {
-            bouncingBall(layer);
-            addVertexes(layer);
+        view.on("resize", function (event) {
+            console.log('resize');
+            console.log(event);
+            addVertexes(layer, event, undefined);
         });
-        view.on("layerview-create", function (event) {
-            bouncingBall(layer);
-            addVertexes(layer);
-        });
+        // view.on("immediate-click", function (event) {
+        //     bouncingBall(layer);
+        //     addVertexes(layer);
+        // })
+        // view.on("layerview-create", function (event) {
+        //     bouncingBall(layer);
+        //     addVertexes(layer);
+        // })
     });
 });
 //# sourceMappingURL=map.js.map
