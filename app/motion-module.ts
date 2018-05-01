@@ -119,148 +119,162 @@ class MotionLayer extends declared(Layer) {
         this.ctx.canvas.width = initCanvas.width;
         this.ctx.canvas.height = initCanvas.height;
         // bouncingBall(layer);
+        // vertexes for line segment
 
-        this._addVertexes(this, undefined, undefined);
+        async function asyncFunc() {
+            for(const i = 0; i < layer.LayerLines.length; i++) {
+                await this._addVertexes(layer.LayerLines[i].graphic.geometry.paths[0], undefined, undefined)
+            }
+        }
+        const loopSegments = asyncFunc.bind(this)
+        loopSegments().then((r) => {console.log(r)})
+
     }
 
-    _addVertexes(layer: any, event: object, change: object) {
-        const g = layer.LayerLines[0].graphic.geometry.paths[0].map((r: any) => {
-            return this.mapView.toScreen(new Point(r));
-        });
+    _addVertexes(vertexArray: any, event: object, change: object) {
+        return new Promise((resolve, reject) => {
+            console.log(vertexArray)
+            const g = vertexArray.map((r: any) => {
+                return this.mapView.toScreen(new Point(r));
+            });
 
-        var length = 0;
-        for (var i = 0; i < g.length; i++) {
-            if (i < g.length - 1) {
-                var distance = Math.sqrt(Math.pow(g[i + 1].x - g[i].x, 2) + Math.pow(g[i + 1].y - g[i].y, 2));
-                length += distance;
-            }
-        };
-        // draw just draw the line statically on the page
-        function draw() {
-            this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-            this.ctx.beginPath();
-            this.ctx.moveTo(g[0].x, g[0].y);
+            var length = 0;
             for (var i = 0; i < g.length; i++) {
-                this.ctx.lineTo(g[i].x, g[i].y);
+                if (i < g.length - 1) {
+                    var distance = Math.sqrt(Math.pow(g[i + 1].x - g[i].x, 2) + Math.pow(g[i + 1].y - g[i].y, 2));
+                    length += distance;
+                }
+            };
+            // draw just draw the line statically on the page
+            function draw() {
+                this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+                this.ctx.beginPath();
+                this.ctx.moveTo(g[0].x, g[0].y);
+                for (var i = 0; i < g.length; i++) {
+                    this.ctx.lineTo(g[i].x, g[i].y);
+                }
+                this.ctx.stroke();
             }
-            this.ctx.stroke();
-        }
-        // Don't need to draw right now
-        // draw();
-        this._animate(g);
+            // Don't need to draw right now
+            // draw();
+            this._animate(g).then((r: any) => resolve(r));
+        })
     }
 
     _animate(g: Array<Object>) {
-        let anFrame;
-        var lastTime = 0;
-        var vendors = ['ms', 'moz', 'webkit', 'o'];
-        for (var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-            window.requestAnimationFrame = window[vendors[x] + 'RequestAnimationFrame'];
-            window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame'] || window[vendors[x] + 'CancelRequestAnimationFrame'];
-        }
-
-        if (!window.requestAnimationFrame) window.requestAnimationFrame = function (callback, element) {
-            var currTime = new Date().getTime();
-            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-            var id = window.setTimeout(function () {
-                callback(currTime + timeToCall);
-            },
-                timeToCall);
-            lastTime = currTime + timeToCall;
-            return id;
-        };
-
-        if (!window.cancelAnimationFrame) window.cancelAnimationFrame = function (id) {
-            clearTimeout(id);
-        };
-
-
-        // window.cancelAnimationFrame();
-        this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-        this.ctx.lineCap = "round";
-        this.ctx.fillStyle = 'red';
-
-        // variable to hold how many frames have elapsed in the animation
-        var t = 1;
-
-        // define the path to plot
-        var vertices = g.map(
-            (r) => {
-                return {
-                    x: r.x,
-                    y: r.y
-                }
-            });
-
-
-
-        // set some style
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeStyle = 'red';
-        // calculate incremental points along the path
-        var points = calcWaypoints(vertices);
-        // extend the line from start to finish with animation
-       
-
-        const removeAnim = this.mapView.on('drag', removeAnimation);
-        let iter = 0;
-
-        function removeAnimation(event) {
-            console.log(iter)
-            iter += 1;
-            cancelAnimationFrame(anFrame);
-            console.log(event)
-            if (event.action === "end") {
-                removeAnim.remove();
+        return new Promise((resolve, reject) => {
+            let anFrame: Number;
+            var lastTime = 0;
+            var vendors = ['ms', 'moz', 'webkit', 'o'];
+            for (var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+                window.requestAnimationFrame = window[vendors[x] + 'RequestAnimationFrame'];
+                window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame'] || window[vendors[x] + 'CancelRequestAnimationFrame'];
             }
-        }
 
-        // calc waypoints traveling along vertices
-        function calcWaypoints(vertices: Array<object>) {
+            if (!window.requestAnimationFrame) window.requestAnimationFrame = function (callback, element) {
+                var currTime = new Date().getTime();
+                var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+                var id = window.setTimeout(function () {
+                    callback(currTime + timeToCall);
+                },
+                    timeToCall);
+                lastTime = currTime + timeToCall;
+                return id;
+            };
 
-            var waypoints = [];
-            for (var i = 1; i < vertices.length; i++) {
-                var pt0 = vertices[i - 1];
-                var pt1 = vertices[i];
-                var dx = pt1.x - pt0.x;
-                var dy = pt1.y - pt0.y;
-                // review this use of distance, but seems to smooth out transistion, 
-                // previously distance was replaced with the value 100
-                var distance = Math.sqrt(Math.pow(pt1.x - pt0.x, 2) + Math.pow(pt1.y - pt0.y, 2));
-                for (var j = 0; j < distance; j++) {
-                    var x = pt0.x + dx * j / distance;
-                    var y = pt0.y + dy * j / distance;
-                    waypoints.push({
-                        x: x,
-                        y: y
-                    });
+            if (!window.cancelAnimationFrame) window.cancelAnimationFrame = function (id) {
+                clearTimeout(id);
+            };
+
+
+            // window.cancelAnimationFrame();
+            // this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+            this.ctx.lineCap = "round";
+            this.ctx.fillStyle = 'red';
+
+            // variable to hold how many frames have elapsed in the animation
+            var t = 1;
+
+            // define the path to plot
+            var vertices = g.map(
+                (r) => {
+                    return {
+                        x: r.x,
+                        y: r.y
+                    }
+                });
+
+
+
+            // set some style
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeStyle = 'red';
+            // calculate incremental points along the path
+            var points = calcWaypoints(vertices);
+            // extend the line from start to finish with animation
+
+
+            const removeAnim = this.mapView.on('drag', removeAnimation);
+            let iter = 0;
+
+            function removeAnimation(event) {
+                console.log(iter)
+                iter += 1;
+                cancelAnimationFrame(anFrame);
+                console.log(event)
+                if (event.action === "end") {
+                    removeAnim.remove();
                 }
             }
-            return (waypoints);
-        }
 
+            // calc waypoints traveling along vertices
+            function calcWaypoints(vertices: Array<object>) {
 
-        let animate = () => {
-            if (t < points.length - 1) {
-                animate = animate.bind(this);
-                anFrame = requestAnimationFrame(animate);
+                var waypoints = [];
+                for (var i = 1; i < vertices.length; i++) {
+                    var pt0 = vertices[i - 1];
+                    var pt1 = vertices[i];
+                    var dx = pt1.x - pt0.x;
+                    var dy = pt1.y - pt0.y;
+                    // review this use of distance, but seems to smooth out transistion, 
+                    // previously distance was replaced with the value 100
+                    var distance = Math.sqrt(Math.pow(pt1.x - pt0.x, 2) + Math.pow(pt1.y - pt0.y, 2));
+                    for (var j = 0; j < distance; j++) {
+                        var x = pt0.x + dx * j / distance;
+                        var y = pt0.y + dy * j / distance;
+                        waypoints.push({
+                            x: x,
+                            y: y
+                        });
+                    }
+                }
+                return (waypoints);
             }
-            // draw a line segment from the last waypoint
-            // to the current waypoint
-            this.ctx.beginPath();
-            this.ctx.moveTo(points[t - 1].x, points[t - 1].y);
-            this.ctx.lineTo(points[t].x, points[t].y);
-            this.ctx.stroke();
-            // increment "t" to get the next waypoint
-            t++;
-        } 
-        
-        animate.bind(this);
-        animate();
+
+
+            let animate = () => {
+                if (t < points.length - 1) {
+                    animate = animate.bind(this);
+                    anFrame = requestAnimationFrame(animate);
+                } else {
+                    resolve('done')
+                }
+                // draw a line segment from the last waypoint
+                // to the current waypoint
+                this.ctx.beginPath();
+                this.ctx.moveTo(points[t - 1].x, points[t - 1].y);
+                this.ctx.lineTo(points[t].x, points[t].y);
+                this.ctx.stroke();
+                // increment "t" to get the next waypoint
+                t++;
+            }
+
+            animate.bind(this);
+            animate();
+        })
     }
 
 }
 
-}
 
 export { MotionLayer }

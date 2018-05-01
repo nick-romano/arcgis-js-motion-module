@@ -11,3 +11,7 @@ can save() and restore() canvas states;
 
 Current, and so far best, way to work with a custom canvas above the map:
  initCanvas.insertAdjacentElement('beforebegin', ctx.canvas)
+
+
+ getting concurrent animations is next. not sure how to add multiple paths to canvas at the same time, 
+ can I use the same ctx?
