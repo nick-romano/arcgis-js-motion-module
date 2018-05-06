@@ -1,4 +1,3 @@
-// import * as d3 from "https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js";
 import EsriMap = require("esri/Map");
 import MapView = require("esri/views/MapView");
 import FeatureLayer = require("esri/layers/FeatureLayer");
@@ -8,14 +7,15 @@ import { Point, Polygon, Polyline } from "esri/geometry";
 import lang = require("dojo/_base/lang");
 
 const map = new EsriMap({
-    basemap: "topo"
+    basemap: "gray-vector"
 });
+window.map = map;
 
 const view = new MapView({
     map: map,
     container: "viewDiv",
     center: [-76.93, 38.9897],
-    zoom: 10
+    zoom: 9
 });
 
 
@@ -28,13 +28,13 @@ const initCustomGraphics = (layer: object) => {
     ctx.canvas.style.position = 'absolute';
     ctx.canvas.style.zIndex = '0';
     initCanvas.insertAdjacentElement('beforebegin', ctx.canvas)
-    ctx.canvas.width = initCanvas.width;
-    ctx.canvas.height = initCanvas.height;
+    ctx.canvas.width = initCanvas.style.width;
+    ctx.canvas.height = initCanvas.style.height;
     // bouncingBall(layer);
     addVertexes(layer);
 }
 function animate(g: Array<Object>) {
-    let anFrame;
+    let anFrame:Number;
     var lastTime = 0;
     var vendors = ['ms', 'moz', 'webkit', 'o'];
     for (var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
@@ -42,7 +42,7 @@ function animate(g: Array<Object>) {
         window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame'] || window[vendors[x] + 'CancelRequestAnimationFrame'];
     }
 
-    if (!window.requestAnimationFrame) window.requestAnimationFrame = function (callback, element) {
+    if (!window.requestAnimationFrame) window.requestAnimationFrame = function (callback: Function, element :HTMLCanvasElement) {
         var currTime = new Date().getTime();
         var timeToCall = Math.max(0, 16 - (currTime - lastTime));
         var id = window.setTimeout(function () {
@@ -182,9 +182,9 @@ const addVertexes = (layer: any, event: object, change: object) => {
 
 view.when(function () {
     console.log('here')
-    const layer = new Motion.MotionLayer({ title: "My Day", source: data, view: view });
+    const layer = new Motion.MotionLayer({ title: "My Day", source: data, view: view, speed: 1});
     console.log(layer)
-    view.graphics.add(layer.LayerLines[1].graphic);
+    // view.graphics.add(layer.LayerLines[1].graphic);
 
     console.log(view)
     // initCustomGraphics(layer);

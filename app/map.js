@@ -2,13 +2,14 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var map = new EsriMap({
-        basemap: "topo"
+        basemap: "gray-vector"
     });
+    window.map = map;
     var view = new MapView({
         map: map,
         container: "viewDiv",
         center: [-76.93, 38.9897],
-        zoom: 10
+        zoom: 9
     });
     var initCustomGraphics = function (layer) {
         var initCanvas = document.querySelector('.esri-display-object');
@@ -19,8 +20,8 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
         ctx.canvas.style.position = 'absolute';
         ctx.canvas.style.zIndex = '0';
         initCanvas.insertAdjacentElement('beforebegin', ctx.canvas);
-        ctx.canvas.width = initCanvas.width;
-        ctx.canvas.height = initCanvas.height;
+        ctx.canvas.width = initCanvas.style.width;
+        ctx.canvas.height = initCanvas.style.height;
         // bouncingBall(layer);
         addVertexes(layer);
     };
@@ -151,9 +152,9 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
     };
     view.when(function () {
         console.log('here');
-        var layer = new Motion.MotionLayer({ title: "My Day", source: data, view: view });
+        var layer = new Motion.MotionLayer({ title: "My Day", source: data, view: view, speed: 1 });
         console.log(layer);
-        view.graphics.add(layer.LayerLines[1].graphic);
+        // view.graphics.add(layer.LayerLines[1].graphic);
         console.log(view);
         // initCustomGraphics(layer);
         var start, end, change;

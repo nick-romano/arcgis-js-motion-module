@@ -2,7 +2,10 @@ import Layer = require("esri/layers/Layer");
 import LayerView = require("esri/views/layers/LayerView");
 import SimpleLineSymbol = require("esri/symbols/SimpleLineSymbol");
 import SimpleMarkerSymbol = require("esri/symbols/SimpleMarkerSymbol");
+import GraphicsLayer = require("esri/layers/GraphicsLayer")
 import Graphic = require("esri/Graphic");
+import Extent = require("esri/geometry/Extent");
+import MapView = require("esri/views/MapView")
 import { Point, Polygon, Polyline } from "esri/geometry";
 import { subclass, property, declared } from "esri/core/accessorSupport/decorators";
 
@@ -10,20 +13,28 @@ import { subclass, property, declared } from "esri/core/accessorSupport/decorato
 @subclass("esri/layers/MotionLayer")
 class MotionLayer extends declared(Layer) {
     @property()
-    source: object;
-
-    @property()
-    _LayerLines: object;
-    _LayerPoints: object;
-
+    source: Object;
+    _LayerLines: Layer;
+    _LayerPoints: Layer;
+    view: MapView;
+    mapView: MapView;
+    ctx: CanvasRenderingContext2D;
+    CustomExtent: Extent;
+    speed: Number;
 
     constructor(args: object) {
         super()
         this.LayerLines = args["source"];
         this.LayerPoints = args["source"];
+        this.view = args["view"];
+        this.speed = args["speed"];
 
-        //start initializing layer
-        this._initView(args.view)
+        // start initializing layer
+        this._initView(args["view"])
+
+        //for dev
+        window.layer = this;
+        window.view = args["view"];
     }
 
     get LayerLines(): object {
@@ -53,8 +64,19 @@ class MotionLayer extends declared(Layer) {
                 r.symbol = lineSymbol;
                 r.graphic = new Graphic({ geometry: r.geometry, attributes: r.attributes, symbol: r.symbol });
             });
-
-            this._LayerLines = LineFeatures
+            console.log(LineFeatures[0].graphic)
+            this._LayerLines = new GraphicsLayer({
+                graphics: LineFeatures.map((r: any) => r.graphic.clone())
+            })
+            const len = this._LayerLines.graphics.items.length
+            const xmax = this._LayerLines.graphics.items.sort((a:Graphic,b: Graphic) => a.geometry.extent.xmax - b.geometry.extent.xmax)[0].geometry.extent.xmax // + .001000
+            const xmin = this._LayerLines.graphics.items.sort((a:Graphic,b: Graphic) => a.geometry.extent.xmin - b.geometry.extent.xmin)[len - 1].geometry.extent.xmin // - .02000
+            const ymax = this._LayerLines.graphics.items.sort((a:Graphic,b: Graphic) => a.geometry.extent.ymax - b.geometry.extent.ymax)[0].geometry.extent.ymax // + .001000
+            const ymin = this._LayerLines.graphics.items.sort((a:Graphic,b: Graphic) => a.geometry.extent.ymin - b.geometry.extent.ymin)[len - 1].geometry.extent.ymin // - .001000
+            
+            this.CustomExtent = new Extent({xmax, xmin, ymax, ymin})
+            /// this._LayerLines.fullExtent.width = 100000;
+            
         } catch (e) {
             console.error(e);
         }
@@ -116,24 +138,27 @@ class MotionLayer extends declared(Layer) {
         this.ctx.canvas.style.position = 'absolute';
         this.ctx.canvas.style.zIndex = '0';
         initCanvas.insertAdjacentElement('beforebegin', this.ctx.canvas)
-        this.ctx.canvas.width = initCanvas.width;
-        this.ctx.canvas.height = initCanvas.height;
+        this.ctx.canvas.width = screen.width;
+        this.ctx.canvas.height = screen.height;
+        this.view.extent = layer.CustomExtent;
+        // this.view.zoom = this.view.zoom + 1;
         // bouncingBall(layer);
         // vertexes for line segment
 
         async function asyncFunc() {
-            for(const i = 0; i < layer.LayerLines.length; i++) {
-                await this._addVertexes(layer.LayerLines[i].graphic.geometry.paths[0], undefined, undefined)
+            for(let i = 0; i < layer.LayerLines.graphics.items.length; i++) {
+                // this.view.extent = layer.LayerLines.graphics.items[i].geometry.extent;
+                await this._addVertexes(layer.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined)
             }
         }
         const loopSegments = asyncFunc.bind(this)
-        loopSegments().then((r) => {console.log(r)})
+        loopSegments().then((r:string) => {console.log(r)})
 
     }
 
     _addVertexes(vertexArray: any, event: object, change: object) {
-        return new Promise((resolve, reject) => {
-            console.log(vertexArray)
+        return new Promise<string>((resolve:string, reject:PromiseRejectionEvent) => {
+            // console.log(vertexArray)
             const g = vertexArray.map((r: any) => {
                 return this.mapView.toScreen(new Point(r));
             });
@@ -162,7 +187,33 @@ class MotionLayer extends declared(Layer) {
     }
 
     _animate(g: Array<Object>) {
-        return new Promise((resolve, reject) => {
+        // calc waypoints traveling along vertices
+        let calcWaypoints = function (vertices: Array<object>) {
+
+            var waypoints = [];
+            for (var i = 1; i < vertices.length; i++) {
+                var pt0 = vertices[i - 1];
+                var pt1 = vertices[i];
+                var dx = pt1.x - pt0.x;
+                var dy = pt1.y - pt0.y;
+                // review this use of distance, but seems to smooth out transistion, 
+                // previously distance was replaced with the value 100
+                var distance = Math.sqrt(Math.pow(pt1.x - pt0.x, 2) + Math.pow(pt1.y - pt0.y, 2));
+                for (var j = 0; j < (distance / this.speed); j++) {
+                    var x = pt0.x + dx * j / (distance / this.speed);
+                    var y = pt0.y + dy * j / (distance / this.speed);
+                    waypoints.push({
+                        x: x,
+                        y: y
+                    });
+                }
+            }
+            return (waypoints);
+        };
+
+        calcWaypoints = calcWaypoints.bind(this);
+
+        return new Promise<string>((resolve:any, reject:PromiseRejectionEvent) => {
             let anFrame: Number;
             var lastTime = 0;
             var vendors = ['ms', 'moz', 'webkit', 'o'];
@@ -190,25 +241,25 @@ class MotionLayer extends declared(Layer) {
             // window.cancelAnimationFrame();
             // this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
             this.ctx.lineCap = "round";
-            this.ctx.fillStyle = 'red';
+            this.ctx.fillStyle = 'rgb(255,255,255)';
 
             // variable to hold how many frames have elapsed in the animation
             var t = 1;
 
             // define the path to plot
             var vertices = g.map(
-                (r) => {
+                (r: Point) => {
                     return {
                         x: r.x,
                         y: r.y
                     }
                 });
 
-
+            
 
             // set some style
             this.ctx.lineWidth = 2;
-            this.ctx.strokeStyle = 'red';
+            this.ctx.strokeStyle = '#ffc107';
             // calculate incremental points along the path
             var points = calcWaypoints(vertices);
             // extend the line from start to finish with animation
@@ -227,30 +278,10 @@ class MotionLayer extends declared(Layer) {
                 }
             }
 
-            // calc waypoints traveling along vertices
-            function calcWaypoints(vertices: Array<object>) {
+        
+ 
 
-                var waypoints = [];
-                for (var i = 1; i < vertices.length; i++) {
-                    var pt0 = vertices[i - 1];
-                    var pt1 = vertices[i];
-                    var dx = pt1.x - pt0.x;
-                    var dy = pt1.y - pt0.y;
-                    // review this use of distance, but seems to smooth out transistion, 
-                    // previously distance was replaced with the value 100
-                    var distance = Math.sqrt(Math.pow(pt1.x - pt0.x, 2) + Math.pow(pt1.y - pt0.y, 2));
-                    for (var j = 0; j < distance; j++) {
-                        var x = pt0.x + dx * j / distance;
-                        var y = pt0.y + dy * j / distance;
-                        waypoints.push({
-                            x: x,
-                            y: y
-                        });
-                    }
-                }
-                return (waypoints);
-            }
-
+            
 
             let animate = () => {
                 if (t < points.length - 1) {
