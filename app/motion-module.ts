@@ -8,7 +8,6 @@ import Extent = require("esri/geometry/Extent");
 import MapView = require("esri/views/MapView")
 import { Point, Polygon, Polyline } from "esri/geometry";
 import { subclass, property, declared } from "esri/core/accessorSupport/decorators";
-import { Color } from "../node_modules/@types/d3/index";
 
 
 @subclass("esri/layers/MotionLayer")
@@ -51,28 +50,31 @@ class MotionLayer extends declared(Layer) {
                 width: 4
             });
 
-            var geom = value["data"].features.map((r: any) => r.geometry);
-            geom.paths = geom.map((r: any) => {
-                var a = r.coordinates.map((a: any) => a)
-                return a
+            const geom = value["data"].features.map((r: any) => {
+                let obj = {};
+                obj.geometry = r.geometry;
+                obj.properties = r.properties;
+                return obj;
+            });
+            const LineFeatures = geom.filter((r: any) => r.geometry.type === "LineString" ? r : null);
+            LineFeatures = LineFeatures.map((r: any) => {
+                var graphic = new Graphic;
+                graphic.geometry = new Polyline();
+                graphic.attributes = r.properties;
+                // to update with param field
+                const timeDiff: number = (new Date(r.properties["timespan"].end).valueOf() - new Date(r.properties["timespan"].begin).valueOf()) * .001;
+                graphic.attributes.timeDiff = timeDiff;
+                graphic.attributes.velocity = (r.properties.Distance * 1) / timeDiff;
+                graphic.geometry.paths[0] = [];
+                var arr = [];
+                r.geometry.coordinates.map((t: object) => arr.push([t[0], t[1]]));
+                graphic.geometry.paths[0] = arr;
+                graphic.symbol = lineSymbol;
+                return graphic
             });
 
-            var attr = value["data"].features.map((r: any) => r.properties);
-            console.log(attr)
-
-            var LineFeatures = geom.filter((r: any) => r.type === "LineString" ? r : null);
-            LineFeatures.map((r: any) => {
-                r.geometry = new Polyline();
-                r.type = "polyline";
-                r.attributes = { a: "b" };
-                r.geometry.paths[0] = [];
-                r.coordinates.map((t: object) => r.geometry.paths[0].push([t[0], t[1]]));
-                r.symbol = lineSymbol;
-                r.graphic = new Graphic({ geometry: r.geometry, attributes: r.attributes, symbol: r.symbol });
-            });
-            console.log(LineFeatures[0].graphic)
             this._LayerLines = new GraphicsLayer({
-                graphics: LineFeatures.map((r: any) => r.graphic.clone())
+                graphics: LineFeatures.map((r: any) => r.clone())
             })
             const len = this._LayerLines.graphics.items.length
             // set extent for map; 
@@ -90,11 +92,13 @@ class MotionLayer extends declared(Layer) {
     }
 
     get features(): object {
-        var geom = this.source["data"].features.map((r: any) => r.geometry);
-        geom.paths = geom.map((r: any) => {
-            var a = r.coordinates.map((a: any) => a)
-            return a
+        var geom = this.source["data"].features.map((r: any) => {
+            let obj = {};
+            obj.geometry = r.geometry;
+            obj.properties = r.properties;
+            return obj;
         });
+
         return geom
     }
 

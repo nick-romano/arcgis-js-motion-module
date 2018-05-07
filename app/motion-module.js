@@ -78,26 +78,30 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                         color: [255, 255, 255],
                         width: 4
                     });
-                    var geom = value["data"].features.map(function (r) { return r.geometry; });
-                    geom.paths = geom.map(function (r) {
-                        var a = r.coordinates.map(function (a) { return a; });
-                        return a;
+                    var geom = value["data"].features.map(function (r) {
+                        var obj = {};
+                        obj.geometry = r.geometry;
+                        obj.properties = r.properties;
+                        return obj;
                     });
-                    var attr = value["data"].features.map(function (r) { return r.properties; });
-                    console.log(attr);
-                    var LineFeatures = geom.filter(function (r) { return r.type === "LineString" ? r : null; });
-                    LineFeatures.map(function (r) {
-                        r.geometry = new geometry_1.Polyline();
-                        r.type = "polyline";
-                        r.attributes = { a: "b" };
-                        r.geometry.paths[0] = [];
-                        r.coordinates.map(function (t) { return r.geometry.paths[0].push([t[0], t[1]]); });
-                        r.symbol = lineSymbol_1;
-                        r.graphic = new Graphic({ geometry: r.geometry, attributes: r.attributes, symbol: r.symbol });
+                    var LineFeatures = geom.filter(function (r) { return r.geometry.type === "LineString" ? r : null; });
+                    LineFeatures = LineFeatures.map(function (r) {
+                        var graphic = new Graphic;
+                        graphic.geometry = new geometry_1.Polyline();
+                        graphic.attributes = r.properties;
+                        // to update with param field
+                        var timeDiff = (new Date(r.properties["timespan"].end).valueOf() - new Date(r.properties["timespan"].begin).valueOf()) * .001;
+                        graphic.attributes.timeDiff = timeDiff;
+                        graphic.attributes.velocity = (r.properties.Distance * 1) / timeDiff;
+                        graphic.geometry.paths[0] = [];
+                        var arr = [];
+                        r.geometry.coordinates.map(function (t) { return arr.push([t[0], t[1]]); });
+                        graphic.geometry.paths[0] = arr;
+                        graphic.symbol = lineSymbol_1;
+                        return graphic;
                     });
-                    console.log(LineFeatures[0].graphic);
                     this._LayerLines = new GraphicsLayer({
-                        graphics: LineFeatures.map(function (r) { return r.graphic.clone(); })
+                        graphics: LineFeatures.map(function (r) { return r.clone(); })
                     });
                     var len = this._LayerLines.graphics.items.length;
                     // set extent for map; 
@@ -117,10 +121,11 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         });
         Object.defineProperty(MotionLayer.prototype, "features", {
             get: function () {
-                var geom = this.source["data"].features.map(function (r) { return r.geometry; });
-                geom.paths = geom.map(function (r) {
-                    var a = r.coordinates.map(function (a) { return a; });
-                    return a;
+                var geom = this.source["data"].features.map(function (r) {
+                    var obj = {};
+                    obj.geometry = r.geometry;
+                    obj.properties = r.properties;
+                    return obj;
                 });
                 return geom;
             },
