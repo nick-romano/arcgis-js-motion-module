@@ -20,16 +20,16 @@ const view = new MapView({
 
 
 const initCustomGraphics = (layer: object) => {
-    var initCanvas = document.querySelector('.esri-display-object');
+    var initCanvas: HTMLCanvasElement = document.querySelector('.esri-display-object');
     var proto = document.createElement("canvas");
-    proto.id = "motionLayer"
+    proto.id = "motionLayer";
     var rootDiv = document.querySelector('g');
     var ctx = proto.getContext("2d");
     ctx.canvas.style.position = 'absolute';
     ctx.canvas.style.zIndex = '0';
     initCanvas.insertAdjacentElement('beforebegin', ctx.canvas)
-    ctx.canvas.width = initCanvas.style.width;
-    ctx.canvas.height = initCanvas.style.height;
+    ctx.canvas.width = initCanvas.width;
+    ctx.canvas.height = initCanvas.height;
     // bouncingBall(layer);
     addVertexes(layer);
 }
@@ -70,11 +70,11 @@ function animate(g: Array<Object>) {
 
     // define the path to plot
     var vertices = g.map(
-        (r) => {
-            return {
+        (r: Point) => {
+            return new Point({
                 x: r.x,
                 y: r.y
-            }
+            });
         });
 
 
@@ -182,7 +182,13 @@ const addVertexes = (layer: any, event: object, change: object) => {
 
 view.when(function () {
     console.log('here')
-    const layer = new Motion.MotionLayer({ title: "My Day", source: data, view: view, speed: 1});
+    const layer = new Motion.MotionLayer({ 
+        title: "My Day", 
+        source: data, 
+        view: view, 
+        speed: 4, 
+        color: '#ffc107'
+    });
     console.log(layer)
     // view.graphics.add(layer.LayerLines[1].graphic);
 

@@ -22,7 +22,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-19T17:36:02.000Z",
                         "end": "2017-08-19T22:00:33.066Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Hotel",
                     "Distance": "0"
                 }
@@ -45,7 +45,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-19T22:00:50.642Z",
                         "end": "2017-08-19T23:31:26.214Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Brasserie",
                     "Distance": "0"
                 }
@@ -94,7 +94,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-19T23:31:26.214Z",
                         "end": "2017-08-19T23:43:51.931Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Walking",
                     "Distance": "148"
                 }
@@ -117,7 +117,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-19T23:43:51.931Z",
                         "end": "2017-08-20T08:50:19.162Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Hotel",
                     "Distance": "0"
                 }
@@ -156,7 +156,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T08:50:19.162Z",
                         "end": "2017-08-20T08:57:19.143Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Cycling",
                     "Distance": "834"
                 }
@@ -179,7 +179,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T08:57:19.143Z",
                         "end": "2017-08-20T08:59:36.262Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Subway Station",
                     "Distance": "0"
                 }
@@ -208,7 +208,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T08:59:36.262Z",
                         "end": "2017-08-20T09:09:08.310Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "On the subway",
                     "Distance": "4512"
                 }
@@ -231,7 +231,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T09:09:08.310Z",
                         "end": "2017-08-20T09:13:06.000Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Subway Station",
                     "Distance": "0"
                 }
@@ -290,7 +290,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T09:13:06.000Z",
                         "end": "2017-08-20T09:16:34.000Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Moving",
                     "Distance": "517"
                 }
@@ -313,7 +313,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T09:16:34.000Z",
                         "end": "2017-08-20T10:10:56.000Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Cafe",
                     "Distance": "0"
                 }
@@ -597,7 +597,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T10:10:56.000Z",
                         "end": "2017-08-20T10:46:09.950Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Walking",
                     "Distance": "4788"
                 }
@@ -620,7 +620,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T10:46:09.950Z",
                         "end": "2017-08-20T12:26:00.313Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Museum",
                     "Distance": "0"
                 }
@@ -664,7 +664,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T12:26:00.313Z",
                         "end": "2017-08-20T12:32:09.572Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Moving",
                     "Distance": "1716"
                 }
@@ -687,7 +687,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T12:32:09.572Z",
                         "end": "2017-08-20T12:36:45.256Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "",
                     "Distance": "0"
                 }
@@ -761,7 +761,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T12:36:45.256Z",
                         "end": "2017-08-20T12:48:01.182Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Walking",
                     "Distance": "1723"
                 }
@@ -784,7 +784,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T12:48:01.182Z",
                         "end": "2017-08-20T14:01:25.599Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Museum",
                     "Distance": "0"
                 }
@@ -833,7 +833,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T14:01:25.599Z",
                         "end": "2017-08-20T14:02:37.591Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Walking",
                     "Distance": "413"
                 }
@@ -856,7 +856,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T14:02:37.591Z",
                         "end": "2017-08-20T14:23:05.927Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Shopping Mall",
                     "Distance": "0"
                 }
@@ -915,7 +915,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T14:23:05.927Z",
                         "end": "2017-08-20T14:36:51.350Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "On the subway",
                     "Distance": "2267"
                 }
@@ -938,7 +938,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T14:36:51.350Z",
                         "end": "2017-08-20T14:49:34.597Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Subway Station",
                     "Distance": "0"
                 }
@@ -1082,7 +1082,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T14:49:34.597Z",
                         "end": "2017-08-20T15:23:14.076Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Walking",
                     "Distance": "2349"
                 }
@@ -1105,7 +1105,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T15:23:14.076Z",
                         "end": "2017-08-20T15:32:54.812Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Supermarket",
                     "Distance": "0"
                 }
@@ -1164,7 +1164,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T15:32:54.812Z",
                         "end": "2017-08-20T15:45:06.087Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Walking",
                     "Distance": "776"
                 }
@@ -1187,7 +1187,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T15:45:06.087Z",
                         "end": "2017-08-20T16:24:23.634Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Park",
                     "Distance": "0"
                 }
@@ -1276,7 +1276,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T16:24:23.634Z",
                         "end": "2017-08-20T16:54:35.793Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Walking",
                     "Distance": "1693"
                 }
@@ -1299,7 +1299,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T16:54:35.793Z",
                         "end": "2017-08-20T19:23:47.546Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Hotel",
                     "Distance": "0"
                 }
@@ -1338,7 +1338,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T19:23:47.546Z",
                         "end": "2017-08-20T19:25:14.166Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Moving",
                     "Distance": "197"
                 }
@@ -1361,7 +1361,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T19:25:14.166Z",
                         "end": "2017-08-20T19:27:54.561Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Subway Station",
                     "Distance": "0"
                 }
@@ -1425,7 +1425,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T19:27:54.561Z",
                         "end": "2017-08-20T19:45:26.589Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "On the subway",
                     "Distance": "3526"
                 }
@@ -1448,7 +1448,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T19:45:26.589Z",
                         "end": "2017-08-20T20:03:43.000Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "",
                     "Distance": "0"
                 }
@@ -1482,7 +1482,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T20:03:43.000Z",
                         "end": "2017-08-20T20:08:50.772Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Walking",
                     "Distance": "721"
                 }
@@ -1504,7 +1504,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T20:08:50.772Z",
                         "end": "2017-08-20T20:17:19.200Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "On the subway",
                     "Distance": "1159"
                 }
@@ -1527,7 +1527,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T20:17:19.200Z",
                         "end": "2017-08-20T20:23:53.287Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Subway Station",
                     "Distance": "0"
                 }
@@ -1571,7 +1571,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T20:23:53.287Z",
                         "end": "2017-08-20T20:31:42.016Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "On the subway",
                     "Distance": "3501"
                 }
@@ -1594,7 +1594,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T20:31:47.142Z",
                         "end": "2017-08-20T20:34:13.812Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Subway Station",
                     "Distance": "0"
                 }
@@ -1658,7 +1658,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T20:34:13.812Z",
                         "end": "2017-08-20T20:39:20.429Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Walking",
                     "Distance": "1305"
                 }
@@ -1681,7 +1681,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T20:39:20.429Z",
                         "end": "2017-08-20T20:52:56.130Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Boat Tour Agency",
                     "Distance": "0"
                 }
@@ -1935,7 +1935,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T20:52:56.130Z",
                         "end": "2017-08-20T21:48:53.540Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Driving",
                     "Distance": "11815"
                 }
@@ -1958,7 +1958,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T21:48:53.540Z",
                         "end": "2017-08-20T21:56:50.957Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Boat Tour Agency",
                     "Distance": "0"
                 }
@@ -2007,7 +2007,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T21:56:50.957Z",
                         "end": "2017-08-20T21:57:51.097Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Walking",
                     "Distance": "256"
                 }
@@ -2030,7 +2030,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T21:57:51.097Z",
                         "end": "2017-08-20T23:13:45.973Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Cafe",
                     "Distance": "0"
                 }
@@ -2099,7 +2099,7 @@ define(["require", "exports"], function (require, exports) {
                         "begin": "2017-08-20T23:13:45.973Z",
                         "end": "2017-08-20T23:26:04.898Z"
                     },
-                    "Email": "naromano22@gmail.com",
+                    "Email": " ",
                     "Category": "Walking",
                     "Distance": "856"
                 }

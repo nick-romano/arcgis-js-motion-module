@@ -20,8 +20,8 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
         ctx.canvas.style.position = 'absolute';
         ctx.canvas.style.zIndex = '0';
         initCanvas.insertAdjacentElement('beforebegin', ctx.canvas);
-        ctx.canvas.width = initCanvas.style.width;
-        ctx.canvas.height = initCanvas.style.height;
+        ctx.canvas.width = initCanvas.width;
+        ctx.canvas.height = initCanvas.height;
         // bouncingBall(layer);
         addVertexes(layer);
     };
@@ -57,10 +57,10 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
         var t = 1;
         // define the path to plot
         var vertices = g.map(function (r) {
-            return {
+            return new geometry_1.Point({
                 x: r.x,
                 y: r.y
-            };
+            });
         });
         // set some style
         ctx.lineWidth = 2;
@@ -152,7 +152,13 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
     };
     view.when(function () {
         console.log('here');
-        var layer = new Motion.MotionLayer({ title: "My Day", source: data, view: view, speed: 1 });
+        var layer = new Motion.MotionLayer({
+            title: "My Day",
+            source: data,
+            view: view,
+            speed: 4,
+            color: '#ffc107'
+        });
         console.log(layer);
         // view.graphics.add(layer.LayerLines[1].graphic);
         console.log(view);

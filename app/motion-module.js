@@ -60,6 +60,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             _this.LayerPoints = args["source"];
             _this.view = args["view"];
             _this.speed = args["speed"];
+            _this.color = args["color"];
             // start initializing layer
             _this._initView(args["view"]);
             //for dev
@@ -82,6 +83,8 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                         var a = r.coordinates.map(function (a) { return a; });
                         return a;
                     });
+                    var attr = value["data"].features.map(function (r) { return r.properties; });
+                    console.log(attr);
                     var LineFeatures = geom.filter(function (r) { return r.type === "LineString" ? r : null; });
                     LineFeatures.map(function (r) {
                         r.geometry = new geometry_1.Polyline();
@@ -97,10 +100,11 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                         graphics: LineFeatures.map(function (r) { return r.graphic.clone(); })
                     });
                     var len = this._LayerLines.graphics.items.length;
-                    var xmax = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.xmax - b.geometry.extent.xmax; })[0].geometry.extent.xmax; // + .001000
-                    var xmin = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.xmin - b.geometry.extent.xmin; })[len - 1].geometry.extent.xmin; // - .02000
-                    var ymax = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.ymax - b.geometry.extent.ymax; })[0].geometry.extent.ymax; // + .001000
-                    var ymin = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.ymin - b.geometry.extent.ymin; })[len - 1].geometry.extent.ymin; // - .001000
+                    // set extent for map; 
+                    var xmax = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.xmax - b.geometry.extent.xmax; })[0].geometry.extent.xmax * .992;
+                    var xmin = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.xmin - b.geometry.extent.xmin; })[len - 1].geometry.extent.xmin * 1.002;
+                    var ymax = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.ymax - b.geometry.extent.ymax; })[0].geometry.extent.ymax * .998;
+                    var ymin = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.ymin - b.geometry.extent.ymin; })[len - 1].geometry.extent.ymin * 1.002;
                     this.CustomExtent = new Extent({ xmax: xmax, xmin: xmin, ymax: ymax, ymin: ymin });
                     /// this._LayerLines.fullExtent.width = 100000;
                 }
@@ -287,14 +291,14 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 var t = 1;
                 // define the path to plot
                 var vertices = g.map(function (r) {
-                    return {
+                    return new geometry_1.Point({
                         x: r.x,
                         y: r.y
-                    };
+                    });
                 });
                 // set some style
                 _this.ctx.lineWidth = 2;
-                _this.ctx.strokeStyle = '#ffc107';
+                _this.ctx.strokeStyle = _this.color;
                 // calculate incremental points along the path
                 var points = calcWaypoints(vertices);
                 // extend the line from start to finish with animation
@@ -311,6 +315,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 }
                 var animate = function () {
                     if (t < points.length - 1) {
+                        // this.ctx.strokeStyle = this.randomColor();
                         animate = animate.bind(_this);
                         anFrame = requestAnimationFrame(animate);
                     }
@@ -329,6 +334,27 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 animate.bind(_this);
                 animate();
             });
+        };
+        MotionLayer.prototype.randomColor = function () {
+            var color = ["red", "green", "cyan", "yellow", "purple", "orange"];
+            return color[Math.floor(Math.random() * 6)];
+        };
+        MotionLayer.prototype.setSpeed = function (speed) {
+            this.speed = speed;
+        };
+        MotionLayer.prototype.getSpeed = function () {
+            return this.speed;
+        };
+        MotionLayer.prototype.setColor = function (color) {
+            if (color === "random") {
+                this.color = color;
+            }
+            else {
+                this.color = this.randomColor();
+            }
+        };
+        MotionLayer.prototype.getColor = function () {
+            return this.color;
         };
         __decorate([
             decorators_1.property()

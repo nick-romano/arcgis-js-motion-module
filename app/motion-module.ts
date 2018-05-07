@@ -8,6 +8,7 @@ import Extent = require("esri/geometry/Extent");
 import MapView = require("esri/views/MapView")
 import { Point, Polygon, Polyline } from "esri/geometry";
 import { subclass, property, declared } from "esri/core/accessorSupport/decorators";
+import { Color } from "../node_modules/@types/d3/index";
 
 
 @subclass("esri/layers/MotionLayer")
@@ -21,6 +22,7 @@ class MotionLayer extends declared(Layer) {
     ctx: CanvasRenderingContext2D;
     CustomExtent: Extent;
     speed: Number;
+    color: Color;
 
     constructor(args: object) {
         super()
@@ -28,6 +30,7 @@ class MotionLayer extends declared(Layer) {
         this.LayerPoints = args["source"];
         this.view = args["view"];
         this.speed = args["speed"];
+        this.color = args["color"];
 
         // start initializing layer
         this._initView(args["view"])
@@ -54,6 +57,9 @@ class MotionLayer extends declared(Layer) {
                 return a
             });
 
+            var attr = value["data"].features.map((r: any) => r.properties);
+            console.log(attr)
+
             var LineFeatures = geom.filter((r: any) => r.type === "LineString" ? r : null);
             LineFeatures.map((r: any) => {
                 r.geometry = new Polyline();
@@ -69,14 +75,15 @@ class MotionLayer extends declared(Layer) {
                 graphics: LineFeatures.map((r: any) => r.graphic.clone())
             })
             const len = this._LayerLines.graphics.items.length
-            const xmax = this._LayerLines.graphics.items.sort((a:Graphic,b: Graphic) => a.geometry.extent.xmax - b.geometry.extent.xmax)[0].geometry.extent.xmax // + .001000
-            const xmin = this._LayerLines.graphics.items.sort((a:Graphic,b: Graphic) => a.geometry.extent.xmin - b.geometry.extent.xmin)[len - 1].geometry.extent.xmin // - .02000
-            const ymax = this._LayerLines.graphics.items.sort((a:Graphic,b: Graphic) => a.geometry.extent.ymax - b.geometry.extent.ymax)[0].geometry.extent.ymax // + .001000
-            const ymin = this._LayerLines.graphics.items.sort((a:Graphic,b: Graphic) => a.geometry.extent.ymin - b.geometry.extent.ymin)[len - 1].geometry.extent.ymin // - .001000
-            
-            this.CustomExtent = new Extent({xmax, xmin, ymax, ymin})
+            // set extent for map; 
+            const xmax = this._LayerLines.graphics.items.sort((a: Graphic, b: Graphic) => a.geometry.extent.xmax - b.geometry.extent.xmax)[0].geometry.extent.xmax * .992;
+            const xmin = this._LayerLines.graphics.items.sort((a: Graphic, b: Graphic) => a.geometry.extent.xmin - b.geometry.extent.xmin)[len - 1].geometry.extent.xmin * 1.002;
+            const ymax = this._LayerLines.graphics.items.sort((a: Graphic, b: Graphic) => a.geometry.extent.ymax - b.geometry.extent.ymax)[0].geometry.extent.ymax * .998;
+            const ymin = this._LayerLines.graphics.items.sort((a: Graphic, b: Graphic) => a.geometry.extent.ymin - b.geometry.extent.ymin)[len - 1].geometry.extent.ymin * 1.002;
+
+            this.CustomExtent = new Extent({ xmax, xmin, ymax, ymin })
             /// this._LayerLines.fullExtent.width = 100000;
-            
+
         } catch (e) {
             console.error(e);
         }
@@ -115,7 +122,7 @@ class MotionLayer extends declared(Layer) {
         this._LayerPoints = PointFeatures;
     }
 
-    _initView(view: object) {
+    private _initView(view: object) {
         try {
             this.mapView = view;
             this._initCustomGraphics(this);
@@ -125,11 +132,11 @@ class MotionLayer extends declared(Layer) {
         }
     }
 
-    _initListeners() {
+    private _initListeners() {
 
     }
 
-    _initCustomGraphics(layer: object) {
+    private _initCustomGraphics(layer: object) {
         var initCanvas = document.querySelector('.esri-display-object');
         var proto = document.createElement("canvas");
         proto.id = "motionLayer"
@@ -146,18 +153,18 @@ class MotionLayer extends declared(Layer) {
         // vertexes for line segment
 
         async function asyncFunc() {
-            for(let i = 0; i < layer.LayerLines.graphics.items.length; i++) {
+            for (let i = 0; i < layer.LayerLines.graphics.items.length; i++) {
                 // this.view.extent = layer.LayerLines.graphics.items[i].geometry.extent;
                 await this._addVertexes(layer.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined)
             }
         }
         const loopSegments = asyncFunc.bind(this)
-        loopSegments().then((r:string) => {console.log(r)})
+        loopSegments().then((r: string) => { console.log(r) })
 
     }
 
-    _addVertexes(vertexArray: any, event: object, change: object) {
-        return new Promise<string>((resolve:string, reject:PromiseRejectionEvent) => {
+    private _addVertexes(vertexArray: any, event: object, change: object) {
+        return new Promise<string>((resolve: string, reject: PromiseRejectionEvent) => {
             // console.log(vertexArray)
             const g = vertexArray.map((r: any) => {
                 return this.mapView.toScreen(new Point(r));
@@ -186,9 +193,9 @@ class MotionLayer extends declared(Layer) {
         })
     }
 
-    _animate(g: Array<Object>) {
+    private _animate(g: Array<Object>) {
         // calc waypoints traveling along vertices
-        let calcWaypoints = function (vertices: Array<object>) {
+        let calcWaypoints = function (vertices: Array<Point>) {
 
             var waypoints = [];
             for (var i = 1; i < vertices.length; i++) {
@@ -213,8 +220,8 @@ class MotionLayer extends declared(Layer) {
 
         calcWaypoints = calcWaypoints.bind(this);
 
-        return new Promise<string>((resolve:any, reject:PromiseRejectionEvent) => {
-            let anFrame: Number;
+        return new Promise<string>((resolve: any, reject: PromiseRejectionEvent) => {
+            let anFrame: number;
             var lastTime = 0;
             var vendors = ['ms', 'moz', 'webkit', 'o'];
             for (var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
@@ -222,7 +229,7 @@ class MotionLayer extends declared(Layer) {
                 window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame'] || window[vendors[x] + 'CancelRequestAnimationFrame'];
             }
 
-            if (!window.requestAnimationFrame) window.requestAnimationFrame = function (callback, element) {
+            if (!window.requestAnimationFrame) window.requestAnimationFrame = function (callback: Function, element: HTMLElement) {
                 var currTime = new Date().getTime();
                 var timeToCall = Math.max(0, 16 - (currTime - lastTime));
                 var id = window.setTimeout(function () {
@@ -249,17 +256,17 @@ class MotionLayer extends declared(Layer) {
             // define the path to plot
             var vertices = g.map(
                 (r: Point) => {
-                    return {
+                    return new Point({
                         x: r.x,
                         y: r.y
-                    }
+                    });
                 });
 
-            
+
 
             // set some style
             this.ctx.lineWidth = 2;
-            this.ctx.strokeStyle = '#ffc107';
+            this.ctx.strokeStyle = this.color;
             // calculate incremental points along the path
             var points = calcWaypoints(vertices);
             // extend the line from start to finish with animation
@@ -268,7 +275,7 @@ class MotionLayer extends declared(Layer) {
             const removeAnim = this.mapView.on('drag', removeAnimation);
             let iter = 0;
 
-            function removeAnimation(event) {
+            function removeAnimation(event: Event) {
                 console.log(iter)
                 iter += 1;
                 cancelAnimationFrame(anFrame);
@@ -278,13 +285,14 @@ class MotionLayer extends declared(Layer) {
                 }
             }
 
-        
- 
 
-            
+
+
+
 
             let animate = () => {
                 if (t < points.length - 1) {
+                    // this.ctx.strokeStyle = this.randomColor();
                     animate = animate.bind(this);
                     anFrame = requestAnimationFrame(animate);
                 } else {
@@ -303,6 +311,31 @@ class MotionLayer extends declared(Layer) {
             animate.bind(this);
             animate();
         })
+    }
+
+    private randomColor() {
+        var color = ["red", "green", "cyan", "yellow", "purple", "orange"]
+        return color[Math.floor(Math.random() * 6)];
+    }
+
+    public setSpeed(speed: number) {
+        this.speed = speed;
+    }
+
+    public getSpeed() {
+        return this.speed;
+    }
+
+    public setColor(color: any) {
+        if (color === "random") {
+            this.color = color;
+        } else {
+            this.color = this.randomColor();
+        }
+    }
+
+    public getColor() {
+        return this.color;
     }
 
 }
