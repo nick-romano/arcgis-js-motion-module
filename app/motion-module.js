@@ -56,11 +56,14 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         __extends(MotionLayer, _super);
         function MotionLayer(args) {
             var _this = _super.call(this) || this;
-            _this.LayerLines = args["source"];
-            _this.LayerPoints = args["source"];
+            console.log(args);
             _this.view = args["view"];
             _this.speed = args["speed"];
             _this.color = args["color"];
+            _this.sourceType = args["sourceType"];
+            _this.LayerLines = args["source"];
+            _this.LayerPoints = args["source"];
+            _this.state = { segment: 0, vertex: 0 };
             // start initializing layer
             _this._initView(args["view"]);
             //for dev
@@ -73,47 +76,52 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 return this._LayerLines;
             },
             set: function (value) {
-                try {
-                    var lineSymbol_1 = new SimpleLineSymbol({
-                        color: [255, 255, 255],
-                        width: 4
-                    });
-                    var geom = value["data"].features.map(function (r) {
-                        var obj = {};
-                        obj.geometry = r.geometry;
-                        obj.properties = r.properties;
-                        return obj;
-                    });
-                    var LineFeatures = geom.filter(function (r) { return r.geometry.type === "LineString" ? r : null; });
-                    LineFeatures = LineFeatures.map(function (r) {
-                        var graphic = new Graphic;
-                        graphic.geometry = new geometry_1.Polyline();
-                        graphic.attributes = r.properties;
-                        // to update with param field
-                        var timeDiff = (new Date(r.properties["timespan"].end).valueOf() - new Date(r.properties["timespan"].begin).valueOf()) * .001;
-                        graphic.attributes.timeDiff = timeDiff;
-                        graphic.attributes.velocity = (r.properties.Distance * 1) / timeDiff;
-                        graphic.geometry.paths[0] = [];
-                        var arr = [];
-                        r.geometry.coordinates.map(function (t) { return arr.push([t[0], t[1]]); });
-                        graphic.geometry.paths[0] = arr;
-                        graphic.symbol = lineSymbol_1;
-                        return graphic;
-                    });
-                    this._LayerLines = new GraphicsLayer({
-                        graphics: LineFeatures.map(function (r) { return r.clone(); })
-                    });
-                    var len = this._LayerLines.graphics.items.length;
-                    // set extent for map; 
-                    var xmax = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.xmax - b.geometry.extent.xmax; })[0].geometry.extent.xmax * .992;
-                    var xmin = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.xmin - b.geometry.extent.xmin; })[len - 1].geometry.extent.xmin * 1.002;
-                    var ymax = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.ymax - b.geometry.extent.ymax; })[0].geometry.extent.ymax * .998;
-                    var ymin = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.ymin - b.geometry.extent.ymin; })[len - 1].geometry.extent.ymin * 1.002;
-                    this.CustomExtent = new Extent({ xmax: xmax, xmin: xmin, ymax: ymax, ymin: ymin });
-                    /// this._LayerLines.fullExtent.width = 100000;
+                if (this.sourceType !== "GEOJSON" && this.sourceType !== "FeatureLayer") {
+                    console.error("sourceType is not valid");
                 }
-                catch (e) {
-                    console.error(e);
+                else if (this.sourceType === "GEOJSON") {
+                    try {
+                        var lineSymbol_1 = new SimpleLineSymbol({
+                            color: [255, 255, 255],
+                            width: 4
+                        });
+                        var geom = value["data"].features.map(function (r) {
+                            var obj = {};
+                            obj.geometry = r.geometry;
+                            obj.properties = r.properties;
+                            return obj;
+                        });
+                        var LineFeatures = geom.filter(function (r) { return r.geometry.type === "LineString" ? r : null; });
+                        LineFeatures = LineFeatures.map(function (r) {
+                            var graphic = new Graphic;
+                            graphic.geometry = new geometry_1.Polyline();
+                            graphic.attributes = r.properties;
+                            // to update with param field
+                            var timeDiff = (new Date(r.properties["timespan"].end).valueOf() - new Date(r.properties["timespan"].begin).valueOf()) * .001;
+                            graphic.attributes.timeDiff = timeDiff;
+                            graphic.attributes.velocity = (r.properties.Distance * 1) / timeDiff;
+                            graphic.geometry.paths[0] = [];
+                            var arr = [];
+                            r.geometry.coordinates.map(function (t) { return arr.push([t[0], t[1]]); });
+                            graphic.geometry.paths[0] = arr;
+                            graphic.symbol = lineSymbol_1;
+                            return graphic;
+                        });
+                        this._LayerLines = new GraphicsLayer({
+                            graphics: LineFeatures.map(function (r) { return r.clone(); })
+                        });
+                        var len = this._LayerLines.graphics.items.length;
+                        // set extent for map; 
+                        var xmax = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.xmax - b.geometry.extent.xmax; })[0].geometry.extent.xmax * .992;
+                        var xmin = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.xmin - b.geometry.extent.xmin; })[len - 1].geometry.extent.xmin * 1.002;
+                        var ymax = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.ymax - b.geometry.extent.ymax; })[0].geometry.extent.ymax * .998;
+                        var ymin = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.ymin - b.geometry.extent.ymin; })[len - 1].geometry.extent.ymin * 1.002;
+                        this.CustomExtent = new Extent({ xmax: xmax, xmin: xmin, ymax: ymax, ymin: ymin });
+                        /// this._LayerLines.fullExtent.width = 100000;
+                    }
+                    catch (e) {
+                        console.error(e);
+                    }
                 }
             },
             enumerable: true,
@@ -263,6 +271,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                         });
                     }
                 }
+                this.state.segment += 1;
                 return (waypoints);
             };
             calcWaypoints = calcWaypoints.bind(this);
@@ -293,7 +302,8 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 _this.ctx.lineCap = "round";
                 _this.ctx.fillStyle = 'rgb(255,255,255)';
                 // variable to hold how many frames have elapsed in the animation
-                var t = 1;
+                // var t = 1;
+                _this.state.vertex = 1;
                 // define the path to plot
                 var vertices = g.map(function (r) {
                     return new geometry_1.Point({
@@ -308,18 +318,17 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 var points = calcWaypoints(vertices);
                 // extend the line from start to finish with animation
                 var removeAnim = _this.mapView.on('drag', removeAnimation);
-                var iter = 0;
+                // let iter = 0;
                 function removeAnimation(event) {
-                    console.log(iter);
-                    iter += 1;
+                    this.state.vertex += 1;
                     cancelAnimationFrame(anFrame);
-                    console.log(event);
                     if (event.action === "end") {
                         removeAnim.remove();
                     }
                 }
                 var animate = function () {
-                    if (t < points.length - 1) {
+                    // console.log(points);
+                    if (_this.state.vertex < points.length - 1) {
                         // this.ctx.strokeStyle = this.randomColor();
                         animate = animate.bind(_this);
                         anFrame = requestAnimationFrame(animate);
@@ -330,11 +339,11 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                     // draw a line segment from the last waypoint
                     // to the current waypoint
                     _this.ctx.beginPath();
-                    _this.ctx.moveTo(points[t - 1].x, points[t - 1].y);
-                    _this.ctx.lineTo(points[t].x, points[t].y);
+                    _this.ctx.moveTo(points[_this.state.vertex - 1].x, points[_this.state.vertex - 1].y);
+                    _this.ctx.lineTo(points[_this.state.vertex].x, points[_this.state.vertex].y);
                     _this.ctx.stroke();
                     // increment "t" to get the next waypoint
-                    t++;
+                    _this.state.vertex += 1;
                 };
                 animate.bind(_this);
                 animate();

@@ -14,6 +14,7 @@ import { subclass, property, declared } from "esri/core/accessorSupport/decorato
 class MotionLayer extends declared(Layer) {
     @property()
     source: Object;
+    sourceType: String;
     _LayerLines: Layer;
     _LayerPoints: Layer;
     view: MapView;
@@ -22,14 +23,19 @@ class MotionLayer extends declared(Layer) {
     CustomExtent: Extent;
     speed: Number;
     color: Color;
+    state: {segment: number, vertex: number};
+
 
     constructor(args: object) {
         super()
-        this.LayerLines = args["source"];
-        this.LayerPoints = args["source"];
+        console.log(args)
         this.view = args["view"];
         this.speed = args["speed"];
         this.color = args["color"];
+        this.sourceType = args["sourceType"];
+        this.LayerLines = args["source"];
+        this.LayerPoints = args["source"];
+        this.state = {segment:0, vertex:0};
 
         // start initializing layer
         this._initView(args["view"])
@@ -44,50 +50,55 @@ class MotionLayer extends declared(Layer) {
     }
 
     set LayerLines(value: object) {
-        try {
-            const lineSymbol = new SimpleLineSymbol({
-                color: [255, 255, 255],  // RGB color values as an array
-                width: 4
-            });
+        if(this.sourceType !== "GEOJSON" && this.sourceType !== "FeatureLayer") {
+            console.error("sourceType is not valid");
+        }
+        else if (this.sourceType === "GEOJSON") {
+            try {
+                const lineSymbol = new SimpleLineSymbol({
+                    color: [255, 255, 255],  // RGB color values as an array
+                    width: 4
+                });
 
-            const geom = value["data"].features.map((r: any) => {
-                let obj = {};
-                obj.geometry = r.geometry;
-                obj.properties = r.properties;
-                return obj;
-            });
-            const LineFeatures = geom.filter((r: any) => r.geometry.type === "LineString" ? r : null);
-            LineFeatures = LineFeatures.map((r: any) => {
-                var graphic = new Graphic;
-                graphic.geometry = new Polyline();
-                graphic.attributes = r.properties;
-                // to update with param field
-                const timeDiff: number = (new Date(r.properties["timespan"].end).valueOf() - new Date(r.properties["timespan"].begin).valueOf()) * .001;
-                graphic.attributes.timeDiff = timeDiff;
-                graphic.attributes.velocity = (r.properties.Distance * 1) / timeDiff;
-                graphic.geometry.paths[0] = [];
-                var arr = [];
-                r.geometry.coordinates.map((t: object) => arr.push([t[0], t[1]]));
-                graphic.geometry.paths[0] = arr;
-                graphic.symbol = lineSymbol;
-                return graphic
-            });
+                const geom = value["data"].features.map((r: any) => {
+                    let obj = {};
+                    obj.geometry = r.geometry;
+                    obj.properties = r.properties;
+                    return obj;
+                });
+                const LineFeatures = geom.filter((r: any) => r.geometry.type === "LineString" ? r : null);
+                LineFeatures = LineFeatures.map((r: any) => {
+                    var graphic = new Graphic;
+                    graphic.geometry = new Polyline();
+                    graphic.attributes = r.properties;
+                    // to update with param field
+                    const timeDiff: number = (new Date(r.properties["timespan"].end).valueOf() - new Date(r.properties["timespan"].begin).valueOf()) * .001;
+                    graphic.attributes.timeDiff = timeDiff;
+                    graphic.attributes.velocity = (r.properties.Distance * 1) / timeDiff;
+                    graphic.geometry.paths[0] = [];
+                    var arr = [];
+                    r.geometry.coordinates.map((t: object) => arr.push([t[0], t[1]]));
+                    graphic.geometry.paths[0] = arr;
+                    graphic.symbol = lineSymbol;
+                    return graphic
+                });
 
-            this._LayerLines = new GraphicsLayer({
-                graphics: LineFeatures.map((r: any) => r.clone())
-            })
-            const len = this._LayerLines.graphics.items.length
-            // set extent for map; 
-            const xmax = this._LayerLines.graphics.items.sort((a: Graphic, b: Graphic) => a.geometry.extent.xmax - b.geometry.extent.xmax)[0].geometry.extent.xmax * .992;
-            const xmin = this._LayerLines.graphics.items.sort((a: Graphic, b: Graphic) => a.geometry.extent.xmin - b.geometry.extent.xmin)[len - 1].geometry.extent.xmin * 1.002;
-            const ymax = this._LayerLines.graphics.items.sort((a: Graphic, b: Graphic) => a.geometry.extent.ymax - b.geometry.extent.ymax)[0].geometry.extent.ymax * .998;
-            const ymin = this._LayerLines.graphics.items.sort((a: Graphic, b: Graphic) => a.geometry.extent.ymin - b.geometry.extent.ymin)[len - 1].geometry.extent.ymin * 1.002;
+                this._LayerLines = new GraphicsLayer({
+                    graphics: LineFeatures.map((r: any) => r.clone())
+                })
+                const len = this._LayerLines.graphics.items.length
+                // set extent for map; 
+                const xmax = this._LayerLines.graphics.items.sort((a: Graphic, b: Graphic) => a.geometry.extent.xmax - b.geometry.extent.xmax)[0].geometry.extent.xmax * .992;
+                const xmin = this._LayerLines.graphics.items.sort((a: Graphic, b: Graphic) => a.geometry.extent.xmin - b.geometry.extent.xmin)[len - 1].geometry.extent.xmin * 1.002;
+                const ymax = this._LayerLines.graphics.items.sort((a: Graphic, b: Graphic) => a.geometry.extent.ymax - b.geometry.extent.ymax)[0].geometry.extent.ymax * .998;
+                const ymin = this._LayerLines.graphics.items.sort((a: Graphic, b: Graphic) => a.geometry.extent.ymin - b.geometry.extent.ymin)[len - 1].geometry.extent.ymin * 1.002;
 
-            this.CustomExtent = new Extent({ xmax, xmin, ymax, ymin })
-            /// this._LayerLines.fullExtent.width = 100000;
+                this.CustomExtent = new Extent({ xmax, xmin, ymax, ymin })
+                /// this._LayerLines.fullExtent.width = 100000;
 
-        } catch (e) {
-            console.error(e);
+            } catch (e) {
+                console.error(e);
+            }
         }
     }
 
@@ -219,6 +230,7 @@ class MotionLayer extends declared(Layer) {
                     });
                 }
             }
+            this.state.segment += 1;
             return (waypoints);
         };
 
@@ -255,7 +267,8 @@ class MotionLayer extends declared(Layer) {
             this.ctx.fillStyle = 'rgb(255,255,255)';
 
             // variable to hold how many frames have elapsed in the animation
-            var t = 1;
+            // var t = 1;
+            this.state.vertex = 1;
 
             // define the path to plot
             var vertices = g.map(
@@ -277,25 +290,20 @@ class MotionLayer extends declared(Layer) {
 
 
             const removeAnim = this.mapView.on('drag', removeAnimation);
-            let iter = 0;
+            // let iter = 0;
 
             function removeAnimation(event: Event) {
-                console.log(iter)
-                iter += 1;
+                this.state.vertex += 1;
                 cancelAnimationFrame(anFrame);
-                console.log(event)
                 if (event.action === "end") {
                     removeAnim.remove();
                 }
             }
 
 
-
-
-
-
             let animate = () => {
-                if (t < points.length - 1) {
+                // console.log(points);
+                if (this.state.vertex < points.length - 1) {
                     // this.ctx.strokeStyle = this.randomColor();
                     animate = animate.bind(this);
                     anFrame = requestAnimationFrame(animate);
@@ -305,11 +313,11 @@ class MotionLayer extends declared(Layer) {
                 // draw a line segment from the last waypoint
                 // to the current waypoint
                 this.ctx.beginPath();
-                this.ctx.moveTo(points[t - 1].x, points[t - 1].y);
-                this.ctx.lineTo(points[t].x, points[t].y);
+                this.ctx.moveTo(points[this.state.vertex - 1].x, points[this.state.vertex - 1].y);
+                this.ctx.lineTo(points[this.state.vertex].x, points[this.state.vertex].y);
                 this.ctx.stroke();
                 // increment "t" to get the next waypoint
-                t++;
+                this.state.vertex += 1;
             }
 
             animate.bind(this);
