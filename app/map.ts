@@ -7,7 +7,7 @@ import { Point, Polygon, Polyline } from "esri/geometry";
 import lang = require("dojo/_base/lang");
 
 const map = new EsriMap({
-    basemap: "gray-vector"
+    basemap: "gray"
 });
 window.map = map;
 

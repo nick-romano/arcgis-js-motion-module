@@ -8,7 +8,7 @@ import Extent = require("esri/geometry/Extent");
 import MapView = require("esri/views/MapView")
 import { Point, Polygon, Polyline } from "esri/geometry";
 import { subclass, property, declared } from "esri/core/accessorSupport/decorators";
-
+import watchUtils = require("esri/core/watchUtils");
 
 @subclass("esri/layers/MotionLayer")
 class MotionLayer extends declared(Layer) {
@@ -29,14 +29,13 @@ class MotionLayer extends declared(Layer) {
 
     constructor(args: object) {
         super()
-        console.log(args)
         this.view = args["view"];
         this.speed = args["speed"];
         this.color = args["color"];
         this.sourceType = args["sourceType"];
         this.LayerLines = args["source"];
         this.LayerPoints = args["source"];
-        this.state = {segment:9, vertex:1};
+        this.state = {segment:2, vertex:1};
         this.lineWidth = 2;
 
         // start initializing layer
@@ -150,7 +149,33 @@ class MotionLayer extends declared(Layer) {
     }
 
     private _initListeners() {
+        this.view.on("drag", () => {
+            cancelAnimationFrame(this.anFrame);
+            this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+            this._paint();
+        });
 
+        this.view.on("pointer-down", () => {
+            cancelAnimationFrame(this.anFrame);
+            this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+            this._paint();
+        });
+
+        this.view.on("hold", () => {
+            cancelAnimationFrame(this.anFrame);
+            this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+            this._paint();
+        });
+
+        // setTimeout(function(){
+        //     watchUtils.whenTrue(this.view, "stationary", this._recordChange);
+        // }.bind(this), 1000)
+    }
+
+    private _recordChange(e: any) {
+        cancelAnimationFrame(this.anFrame);
+        this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+        this._paint();
     }
 
     private _initCustomGraphics(layer: object) {
@@ -168,36 +193,39 @@ class MotionLayer extends declared(Layer) {
         // this.view.zoom = this.view.zoom + 1;
         // bouncingBall(layer);
         // vertexes for line segment
+        this._paint();
+    }
+
+    private _paint() {
         this._drawExistingState();
 
         async function asyncFunc() {
-            for (let i = 0; i < layer.LayerLines.graphics.items.length; i++) {
+            for (let i = 0; i < this.LayerLines.graphics.items.length; i++) {
                 // this.view.extent = layer.LayerLines.graphics.items[i].geometry.extent;
                 if (i > this.state.segment - 1) {
-                    await this._addVertexes(layer.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined)
+                    await this._addVertexes(this.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined)
                 }
             }
         }
 
-        console.log(this.state)
 
         const loopSegments = asyncFunc.bind(this)
         loopSegments().then((r: string) => { console.log(r) })
-
     }
 
     private _drawExistingState() {
         const existingState = [];
         for(let i=0; i < this.state.segment; i++) {
+            const tempArray = [];
             for(var j = 0; j < this.LayerLines.graphics.items[i].geometry.paths[0].length; j++) {
-                existingState.push(
+                tempArray.push(
                     this.view.toScreen(
                         new Point(this.LayerLines.graphics.items[i].geometry.paths[0][j])
                     )
                 );
             }
+            existingState.push(tempArray);
         }
-        console.log(existingState);
         this._draw(existingState);
     }
 
@@ -206,16 +234,17 @@ class MotionLayer extends declared(Layer) {
         this.ctx.lineWidth = this.lineWidth;
         this.ctx.strokeStyle = this.color;
         this.ctx.beginPath();
-        this.ctx.moveTo(g[0].x, g[0].y);
-        for (var i = 0; i < g.length; i++) {
-            this.ctx.lineTo(g[i].x, g[i].y);
+        for (var i = 0; i < g.length; i ++) {
+            this.ctx.moveTo(g[i][0].x, g[i][0].y);
+            for (var j = 0; j < g[i].length; j++) {
+                this.ctx.lineTo(g[i][j].x, g[i][j].y);
+            }
         }
         this.ctx.stroke();
     }
 
     private _addVertexes(vertexArray: any, event: object, change: object) {
         return new Promise<string>((resolve: string, reject: PromiseRejectionEvent) => {
-            // console.log(vertexArray)
             const g = vertexArray.map((r: any) => {
                 return this.mapView.toScreen(new Point(r));
             });
@@ -227,7 +256,6 @@ class MotionLayer extends declared(Layer) {
                     length += distance;
                 }
             };
-            // console.log(g)
             this._animate(g).then((r: any) => resolve(r));
         })
     }
@@ -313,24 +341,12 @@ class MotionLayer extends declared(Layer) {
             // extend the line from start to finish with animation
 
 
-            const removeAnim = this.mapView.on('drag', removeAnimation);
-            // let iter = 0;
-
-            function removeAnimation(event: Event) {
-                this.state.vertex += 1;
-                cancelAnimationFrame(anFrame);
-                if (event.action === "end") {
-                    removeAnim.remove();
-                }
-            }
-
 
             let animate = () => {
-                // console.log(points);
                 if (this.state.vertex < points.length - 1) {
                     // this.ctx.strokeStyle = this.randomColor();
                     animate = animate.bind(this);
-                    anFrame = requestAnimationFrame(animate);
+                    this.anFrame = requestAnimationFrame(animate);
                 } else {
                     resolve('done')
                 }

@@ -2,7 +2,7 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var map = new EsriMap({
-        basemap: "gray-vector"
+        basemap: "gray"
     });
     window.map = map;
     var view = new MapView({
