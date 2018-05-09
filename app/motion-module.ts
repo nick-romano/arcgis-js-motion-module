@@ -21,8 +21,9 @@ class MotionLayer extends declared(Layer) {
     mapView: MapView;
     ctx: CanvasRenderingContext2D;
     CustomExtent: Extent;
-    speed: Number;
+    speed: number;
     color: Color;
+    lineWidth: number;
     state: {segment: number, vertex: number};
 
 
@@ -35,7 +36,8 @@ class MotionLayer extends declared(Layer) {
         this.sourceType = args["sourceType"];
         this.LayerLines = args["source"];
         this.LayerPoints = args["source"];
-        this.state = {segment:0, vertex:0};
+        this.state = {segment:9, vertex:1};
+        this.lineWidth = 2;
 
         // start initializing layer
         this._initView(args["view"])
@@ -166,16 +168,49 @@ class MotionLayer extends declared(Layer) {
         // this.view.zoom = this.view.zoom + 1;
         // bouncingBall(layer);
         // vertexes for line segment
+        this._drawExistingState();
 
         async function asyncFunc() {
             for (let i = 0; i < layer.LayerLines.graphics.items.length; i++) {
                 // this.view.extent = layer.LayerLines.graphics.items[i].geometry.extent;
-                await this._addVertexes(layer.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined)
+                if (i > this.state.segment - 1) {
+                    await this._addVertexes(layer.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined)
+                }
             }
         }
+
+        console.log(this.state)
+
         const loopSegments = asyncFunc.bind(this)
         loopSegments().then((r: string) => { console.log(r) })
 
+    }
+
+    private _drawExistingState() {
+        const existingState = [];
+        for(let i=0; i < this.state.segment; i++) {
+            for(var j = 0; j < this.LayerLines.graphics.items[i].geometry.paths[0].length; j++) {
+                existingState.push(
+                    this.view.toScreen(
+                        new Point(this.LayerLines.graphics.items[i].geometry.paths[0][j])
+                    )
+                );
+            }
+        }
+        console.log(existingState);
+        this._draw(existingState);
+    }
+
+    // draw just draw the line statically on the page
+    private _draw(g: any) {
+        this.ctx.lineWidth = this.lineWidth;
+        this.ctx.strokeStyle = this.color;
+        this.ctx.beginPath();
+        this.ctx.moveTo(g[0].x, g[0].y);
+        for (var i = 0; i < g.length; i++) {
+            this.ctx.lineTo(g[i].x, g[i].y);
+        }
+        this.ctx.stroke();
     }
 
     private _addVertexes(vertexArray: any, event: object, change: object) {
@@ -192,18 +227,7 @@ class MotionLayer extends declared(Layer) {
                     length += distance;
                 }
             };
-            // draw just draw the line statically on the page
-            function draw() {
-                this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-                this.ctx.beginPath();
-                this.ctx.moveTo(g[0].x, g[0].y);
-                for (var i = 0; i < g.length; i++) {
-                    this.ctx.lineTo(g[i].x, g[i].y);
-                }
-                this.ctx.stroke();
-            }
-            // Don't need to draw right now
-            // draw();
+            // console.log(g)
             this._animate(g).then((r: any) => resolve(r));
         })
     }
@@ -282,7 +306,7 @@ class MotionLayer extends declared(Layer) {
 
 
             // set some style
-            this.ctx.lineWidth = 2;
+            this.ctx.lineWidth = this.lineWidth;
             this.ctx.strokeStyle = this.color;
             // calculate incremental points along the path
             var points = calcWaypoints(vertices);

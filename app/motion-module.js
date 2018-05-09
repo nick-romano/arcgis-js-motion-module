@@ -63,7 +63,8 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             _this.sourceType = args["sourceType"];
             _this.LayerLines = args["source"];
             _this.LayerPoints = args["source"];
-            _this.state = { segment: 0, vertex: 0 };
+            _this.state = { segment: 9, vertex: 1 };
+            _this.lineWidth = 2;
             // start initializing layer
             _this._initView(args["view"]);
             //for dev
@@ -192,6 +193,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             // this.view.zoom = this.view.zoom + 1;
             // bouncingBall(layer);
             // vertexes for line segment
+            this._drawExistingState();
             function asyncFunc() {
                 return __awaiter(this, void 0, void 0, function () {
                     var i;
@@ -202,10 +204,9 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                                 _a.label = 1;
                             case 1:
                                 if (!(i < layer.LayerLines.graphics.items.length)) return [3 /*break*/, 4];
-                                // this.view.extent = layer.LayerLines.graphics.items[i].geometry.extent;
+                                if (!(i > this.state.segment - 1)) return [3 /*break*/, 3];
                                 return [4 /*yield*/, this._addVertexes(layer.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined)];
                             case 2:
-                                // this.view.extent = layer.LayerLines.graphics.items[i].geometry.extent;
                                 _a.sent();
                                 _a.label = 3;
                             case 3:
@@ -216,8 +217,30 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                     });
                 });
             }
+            console.log(this.state);
             var loopSegments = asyncFunc.bind(this);
             loopSegments().then(function (r) { console.log(r); });
+        };
+        MotionLayer.prototype._drawExistingState = function () {
+            var existingState = [];
+            for (var i = 0; i < this.state.segment; i++) {
+                for (var j = 0; j < this.LayerLines.graphics.items[i].geometry.paths[0].length; j++) {
+                    existingState.push(this.view.toScreen(new geometry_1.Point(this.LayerLines.graphics.items[i].geometry.paths[0][j])));
+                }
+            }
+            console.log(existingState);
+            this._draw(existingState);
+        };
+        // draw just draw the line statically on the page
+        MotionLayer.prototype._draw = function (g) {
+            this.ctx.lineWidth = this.lineWidth;
+            this.ctx.strokeStyle = this.color;
+            this.ctx.beginPath();
+            this.ctx.moveTo(g[0].x, g[0].y);
+            for (var i = 0; i < g.length; i++) {
+                this.ctx.lineTo(g[i].x, g[i].y);
+            }
+            this.ctx.stroke();
         };
         MotionLayer.prototype._addVertexes = function (vertexArray, event, change) {
             var _this = this;
@@ -234,18 +257,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                     }
                 }
                 ;
-                // draw just draw the line statically on the page
-                function draw() {
-                    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(g[0].x, g[0].y);
-                    for (var i = 0; i < g.length; i++) {
-                        this.ctx.lineTo(g[i].x, g[i].y);
-                    }
-                    this.ctx.stroke();
-                }
-                // Don't need to draw right now
-                // draw();
+                // console.log(g)
                 _this._animate(g).then(function (r) { return resolve(r); });
             });
         };
@@ -312,7 +324,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                     });
                 });
                 // set some style
-                _this.ctx.lineWidth = 2;
+                _this.ctx.lineWidth = _this.lineWidth;
                 _this.ctx.strokeStyle = _this.color;
                 // calculate incremental points along the path
                 var points = calcWaypoints(vertices);
