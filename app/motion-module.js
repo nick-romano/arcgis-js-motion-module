@@ -62,7 +62,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             _this.sourceType = args["sourceType"];
             _this.LayerLines = args["source"];
             _this.LayerPoints = args["source"];
-            _this.state = { segment: 2, vertex: 1 };
+            _this.state = { segment: 0, vertex: 115 };
             _this.lineWidth = 2;
             // start initializing layer
             _this._initView(args["view"]);
@@ -234,6 +234,8 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                                 return [4 /*yield*/, this._addVertexes(this.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined)];
                             case 2:
                                 _a.sent();
+                                this.state.segment += 1;
+                                console.log('segment +1');
                                 _a.label = 3;
                             case 3:
                                 i++;
@@ -248,13 +250,22 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         };
         MotionLayer.prototype._drawExistingState = function () {
             var existingState = [];
+            // console.log('here')
             for (var i = 0; i < this.state.segment; i++) {
                 var tempArray = [];
                 for (var j = 0; j < this.LayerLines.graphics.items[i].geometry.paths[0].length; j++) {
-                    tempArray.push(this.view.toScreen(new geometry_1.Point(this.LayerLines.graphics.items[i].geometry.paths[0][j])));
+                    if (this.state.segment === i) {
+                        if (j > this.state.vertex) {
+                            tempArray.push(this.view.toScreen(new geometry_1.Point(this.LayerLines.graphics.items[i].geometry.paths[0][j])));
+                        }
+                    }
+                    else {
+                        tempArray.push(this.view.toScreen(new geometry_1.Point(this.LayerLines.graphics.items[i].geometry.paths[0][j])));
+                    }
                 }
-                existingState.push(tempArray);
+                typeof (tempArray[0]) === "object" ? existingState.push(tempArray) : undefined;
             }
+            // console.log(existingState)
             this._draw(existingState);
         };
         // draw just draw the line statically on the page
@@ -309,7 +320,6 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                         });
                     }
                 }
-                this.state.segment += 1;
                 return (waypoints);
             };
             calcWaypoints = calcWaypoints.bind(this);
@@ -340,8 +350,8 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 _this.ctx.lineCap = "round";
                 _this.ctx.fillStyle = 'rgb(255,255,255)';
                 // variable to hold how many frames have elapsed in the animation
-                // var t = 1;
-                _this.state.vertex = 1;
+                var t = 1;
+                // t = 1;
                 // define the path to plot
                 var vertices = g.map(function (r) {
                     return new geometry_1.Point({
@@ -356,7 +366,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 var points = calcWaypoints(vertices);
                 // extend the line from start to finish with animation
                 var animate = function () {
-                    if (_this.state.vertex < points.length - 1) {
+                    if (t < points.length - 1) {
                         // this.ctx.strokeStyle = this.randomColor();
                         animate = animate.bind(_this);
                         _this.anFrame = requestAnimationFrame(animate);
@@ -367,11 +377,11 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                     // draw a line segment from the last waypoint
                     // to the current waypoint
                     _this.ctx.beginPath();
-                    _this.ctx.moveTo(points[_this.state.vertex - 1].x, points[_this.state.vertex - 1].y);
-                    _this.ctx.lineTo(points[_this.state.vertex].x, points[_this.state.vertex].y);
+                    _this.ctx.moveTo(points[t - 1].x, points[t - 1].y);
+                    _this.ctx.lineTo(points[t].x, points[t].y);
                     _this.ctx.stroke();
                     // increment "t" to get the next waypoint
-                    _this.state.vertex += 1;
+                    t += 1;
                 };
                 animate.bind(_this);
                 animate();

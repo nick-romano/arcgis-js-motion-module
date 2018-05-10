@@ -25,7 +25,7 @@ view.when(function () {
         source: data, 
         sourceType: "GEOJSON",
         view: view, 
-        speed: 4, 
+        speed: .5, 
         color: '#ffc107'
     });
     console.log(layer)

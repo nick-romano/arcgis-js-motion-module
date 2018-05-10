@@ -18,7 +18,7 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
             source: data,
             sourceType: "GEOJSON",
             view: view,
-            speed: 4,
+            speed: .5,
             color: '#ffc107'
         });
         console.log(layer);

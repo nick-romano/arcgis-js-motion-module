@@ -35,7 +35,7 @@ class MotionLayer extends declared(Layer) {
         this.sourceType = args["sourceType"];
         this.LayerLines = args["source"];
         this.LayerPoints = args["source"];
-        this.state = {segment:2, vertex:1};
+        this.state = {segment:0, vertex:115};
         this.lineWidth = 2;
 
         // start initializing layer
@@ -77,7 +77,7 @@ class MotionLayer extends declared(Layer) {
                     graphic.attributes.timeDiff = timeDiff;
                     graphic.attributes.velocity = (r.properties.Distance * 1) / timeDiff;
                     graphic.geometry.paths[0] = [];
-                    var arr = [];
+                    var arr: Array<Array<number>> = [];
                     r.geometry.coordinates.map((t: object) => arr.push([t[0], t[1]]));
                     graphic.geometry.paths[0] = arr;
                     graphic.symbol = lineSymbol;
@@ -203,7 +203,9 @@ class MotionLayer extends declared(Layer) {
             for (let i = 0; i < this.LayerLines.graphics.items.length; i++) {
                 // this.view.extent = layer.LayerLines.graphics.items[i].geometry.extent;
                 if (i > this.state.segment - 1) {
-                    await this._addVertexes(this.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined)
+                    await this._addVertexes(this.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined);
+                    this.state.segment += 1;
+                    console.log('segment +1')
                 }
             }
         }
@@ -215,17 +217,29 @@ class MotionLayer extends declared(Layer) {
 
     private _drawExistingState() {
         const existingState = [];
-        for(let i=0; i < this.state.segment; i++) {
+        // console.log('here')
+        for(let i = 0; i < this.state.segment; i++) {
             const tempArray = [];
             for(var j = 0; j < this.LayerLines.graphics.items[i].geometry.paths[0].length; j++) {
-                tempArray.push(
-                    this.view.toScreen(
-                        new Point(this.LayerLines.graphics.items[i].geometry.paths[0][j])
-                    )
-                );
+                if(this.state.segment === i) {
+                    if(j > this.state.vertex) {
+                        tempArray.push(
+                            this.view.toScreen(
+                                new Point(this.LayerLines.graphics.items[i].geometry.paths[0][j])
+                            )
+                        );
+                    }
+                } else {
+                    tempArray.push(
+                        this.view.toScreen(
+                            new Point(this.LayerLines.graphics.items[i].geometry.paths[0][j])
+                        )
+                    );
+                }
             }
-            existingState.push(tempArray);
+            typeof(tempArray[0]) === "object" ? existingState.push(tempArray) : undefined;
         }
+        // console.log(existingState)
         this._draw(existingState);
     }
 
@@ -282,7 +296,6 @@ class MotionLayer extends declared(Layer) {
                     });
                 }
             }
-            this.state.segment += 1;
             return (waypoints);
         };
 
@@ -319,8 +332,8 @@ class MotionLayer extends declared(Layer) {
             this.ctx.fillStyle = 'rgb(255,255,255)';
 
             // variable to hold how many frames have elapsed in the animation
-            // var t = 1;
-            this.state.vertex = 1;
+            var t = 1;
+            // t = 1;
 
             // define the path to plot
             var vertices = g.map(
@@ -343,7 +356,7 @@ class MotionLayer extends declared(Layer) {
 
 
             let animate = () => {
-                if (this.state.vertex < points.length - 1) {
+                if (t < points.length - 1) {
                     // this.ctx.strokeStyle = this.randomColor();
                     animate = animate.bind(this);
                     this.anFrame = requestAnimationFrame(animate);
@@ -353,11 +366,11 @@ class MotionLayer extends declared(Layer) {
                 // draw a line segment from the last waypoint
                 // to the current waypoint
                 this.ctx.beginPath();
-                this.ctx.moveTo(points[this.state.vertex - 1].x, points[this.state.vertex - 1].y);
-                this.ctx.lineTo(points[this.state.vertex].x, points[this.state.vertex].y);
+                this.ctx.moveTo(points[t - 1].x, points[t - 1].y);
+                this.ctx.lineTo(points[t].x, points[t].y);
                 this.ctx.stroke();
                 // increment "t" to get the next waypoint
-                this.state.vertex += 1;
+                t += 1;
             }
 
             animate.bind(this);
