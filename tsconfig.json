@@ -11,7 +11,8 @@
         "suppressImplicitAnyIndexErrors": true
     },
     "include": [
-        "./app/*"
+        "./app/*",
+        "./docs/*"
     ],
     "exclude": [
         "node_modules"
