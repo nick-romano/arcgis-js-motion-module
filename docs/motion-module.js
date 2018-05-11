@@ -49,7 +49,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbol", "esri/symbols/SimpleMarkerSymbol", "esri/layers/GraphicsLayer", "esri/Graphic", "esri/geometry/Extent", "esri/geometry", "esri/core/accessorSupport/decorators"], function (require, exports, Layer, SimpleLineSymbol, SimpleMarkerSymbol, GraphicsLayer, Graphic, Extent, geometry_1, decorators_1) {
+define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbol", "esri/symbols/SimpleMarkerSymbol", "esri/layers/GraphicsLayer", "esri/Graphic", "esri/geometry/Extent", "esri/geometry", "esri/core/accessorSupport/decorators", "./simplify.js"], function (require, exports, Layer, SimpleLineSymbol, SimpleMarkerSymbol, GraphicsLayer, Graphic, Extent, geometry_1, decorators_1, simplify) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var MotionLayer = /** @class */ (function (_super) {
@@ -57,12 +57,14 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         function MotionLayer(args) {
             var _this = _super.call(this) || this;
             _this.source = args["source"];
+            _this.catField = args["catField"];
             _this.view = args["view"];
             _this.speed = args["speed"];
             _this.color = args["color"];
             _this.sourceType = args["sourceType"];
             _this.LayerLines = args["source"];
             _this.LayerPoints = args["source"];
+            _this.Categories = args["catField"];
             _this.state = { segment: 0, vertex: 115 };
             _this.lineWidth = 2;
             // start initializing layer
@@ -167,6 +169,40 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             enumerable: true,
             configurable: true
         });
+        Object.defineProperty(MotionLayer.prototype, "Categories", {
+            get: function () {
+                return this._categories;
+            },
+            set: function (Field) {
+                var _this = this;
+                var allValues = this.LayerLines.graphics.items.map(function (r) { return r.attributes[Field]; });
+                console.log(allValues);
+                var catFields = allValues.filter(function (v, i, a) { return a.indexOf(v) === i; });
+                var catColorArray = {};
+                function getColor() {
+                    for (var i = 0; i < 100; i++) {
+                        var color = this.randomColor();
+                        if (!Object.values(this.Categories).includes(color)) {
+                            return color;
+                        }
+                        else {
+                            // do nothing
+                        }
+                    }
+                    return color;
+                }
+                console.log('here');
+                catFields.map(function (r) {
+                    // const FinalColor = getColor();
+                    catColorArray[r] = _this.randomColor();
+                });
+                if (this.catField !== undefined) {
+                    this._categories = catColorArray;
+                }
+            },
+            enumerable: true,
+            configurable: true
+        });
         MotionLayer.prototype._initView = function (view) {
             try {
                 this.mapView = view;
@@ -194,9 +230,6 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 _this.ctx.clearRect(0, 0, _this.ctx.canvas.width, _this.ctx.canvas.height);
                 _this._paint();
             });
-            // setTimeout(function(){
-            //     watchUtils.whenTrue(this.view, "stationary", this._recordChange);
-            // }.bind(this), 1000)
         };
         MotionLayer.prototype._recordChange = function (e) {
             cancelAnimationFrame(this.anFrame);
@@ -225,7 +258,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             this.LayerLines.graphics.items.sort(function (a, b) { return new Date(a.attributes.timespan.begin) - new Date(b.attributes.timespan.begin); });
             function asyncFunc() {
                 return __awaiter(this, void 0, void 0, function () {
-                    var i;
+                    var i, category;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
                             case 0:
@@ -234,6 +267,14 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                             case 1:
                                 if (!(i < this.LayerLines.graphics.items.length)) return [3 /*break*/, 4];
                                 if (!(i > this.state.segment - 1)) return [3 /*break*/, 3];
+                                if (this.Categories !== undefined) {
+                                    category = this.LayerLines.graphics.items[i].attributes[this.catField];
+                                    this.setColor(this.Categories[category]);
+                                }
+                                if (this.LayerLines.graphics.items[i].attributes.velocity) {
+                                    this.setSpeed(this.LayerLines.graphics.items[i].attributes.velocity);
+                                }
+                                ;
                                 return [4 /*yield*/, this._addVertexes(this.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined)];
                             case 2:
                                 _a.sent();
@@ -249,15 +290,18 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 });
             }
             var loopSegments = asyncFunc.bind(this);
-            loopSegments().then(function (r) { console.log(r); });
+            loopSegments().then(function (r) { console.log('complete'); });
         };
         MotionLayer.prototype._drawExistingState = function () {
             var existingState = [];
-            // console.log('here')
             this.LayerLines.graphics.items.sort(function (a, b) { return new Date(a.attributes.timespan.begin) - new Date(b.attributes.timespan.begin); });
             for (var i = 0; i < this.state.segment; i++) {
                 var tempArray = [];
                 for (var j = 0; j < this.LayerLines.graphics.items[i].geometry.paths[0].length; j++) {
+                    if (this.Categories !== undefined) {
+                        var category = this.LayerLines.graphics.items[i].attributes[this.catField];
+                        this.setColor(this.Categories[category]);
+                    }
                     if (this.state.segment === i) {
                         if (j > this.state.vertex) {
                             tempArray.push(this.view.toScreen(new geometry_1.Point(this.LayerLines.graphics.items[i].geometry.paths[0][j])));
@@ -268,15 +312,14 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                     }
                 }
                 typeof (tempArray[0]) === "object" ? existingState.push(tempArray) : undefined;
+                this._draw(existingState);
             }
             // console.log(existingState)
-            this._draw(existingState);
         };
         // draw just draw the line statically on the page
         MotionLayer.prototype._draw = function (g) {
-            this.ctx.lineWidth = this.lineWidth;
-            this.ctx.strokeStyle = this.color;
             this.ctx.beginPath();
+            var g = simplify(g, 4);
             for (var i = 0; i < g.length; i++) {
                 this.ctx.moveTo(g[i][0].x, g[i][0].y);
                 for (var j = 0; j < g[i].length; j++) {
@@ -392,7 +435,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             });
         };
         MotionLayer.prototype.randomColor = function () {
-            var color = ["red", "green", "cyan", "yellow", "purple", "orange"];
+            var color = ["#ffc107", "#e91e63", "#673ab7", "#2196f3", "#4caf50", "#ffeb3b"];
             return color[Math.floor(Math.random() * 6)];
         };
         MotionLayer.prototype.setSpeed = function (speed) {

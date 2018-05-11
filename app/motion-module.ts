@@ -9,6 +9,7 @@ import MapView = require("esri/views/MapView")
 import { Point, Polygon, Polyline } from "esri/geometry";
 import { subclass, property, declared } from "esri/core/accessorSupport/decorators";
 import watchUtils = require("esri/core/watchUtils");
+import simplify = require("./simplify.js");
 
 @subclass("esri/layers/MotionLayer")
 class MotionLayer extends declared(Layer) {
@@ -30,12 +31,14 @@ class MotionLayer extends declared(Layer) {
     constructor(args: object) {
         super()
         this.source = args["source"];
+        this.catField = args["catField"];
         this.view = args["view"];
         this.speed = args["speed"];
         this.color = args["color"];
         this.sourceType = args["sourceType"];
         this.LayerLines = args["source"];
         this.LayerPoints = args["source"];
+        this.Categories = args["catField"];
         this.state = {segment:0, vertex:115};
         this.lineWidth = 2;
 
@@ -140,6 +143,40 @@ class MotionLayer extends declared(Layer) {
         this._LayerPoints = PointFeatures;
     }
 
+    get Categories(): Array {
+        return this._categories;
+    }
+
+    set Categories(Field: string) {
+        const allValues = this.LayerLines.graphics.items.map((r) => r.attributes[Field]);
+        console.log(allValues)
+        const catFields = allValues.filter((v, i, a) => a.indexOf(v) === i); 
+        const catColorArray = {};
+
+        function getColor() {
+            for(var i = 0; i < 100; i ++) {
+                const color = this.randomColor();
+                if(!Object.values(this.Categories).includes(color)) {
+                    return color;
+                } else {
+                    // do nothing
+                }
+            }
+            return color;
+        }
+
+        console.log('here')
+
+        catFields.map((r) => {
+            // const FinalColor = getColor();
+            catColorArray[r] = this.randomColor(); 
+        });
+
+        if(this.catField !== undefined) {
+            this._categories = catColorArray;
+        }
+    }
+
     private _initView(view: object) {
         try {
             this.mapView = view;
@@ -168,10 +205,6 @@ class MotionLayer extends declared(Layer) {
             this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
             this._paint();
         });
-
-        // setTimeout(function(){
-        //     watchUtils.whenTrue(this.view, "stationary", this._recordChange);
-        // }.bind(this), 1000)
     }
 
     private _recordChange(e: any) {
@@ -205,6 +238,16 @@ class MotionLayer extends declared(Layer) {
             for (let i = 0; i < this.LayerLines.graphics.items.length; i++) {
                 // this.view.extent = layer.LayerLines.graphics.items[i].geometry.extent;
                 if (i > this.state.segment - 1) {
+
+                    if(this.Categories !== undefined) {
+                        const category = this.LayerLines.graphics.items[i].attributes[this.catField];
+                        this.setColor(this.Categories[category]);
+                    }
+
+                    if(this.LayerLines.graphics.items[i].attributes.velocity) {
+                        this.setSpeed(this.LayerLines.graphics.items[i].attributes.velocity);
+                    };
+
                     await this._addVertexes(this.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined);
                     this.state.segment += 1;
                     console.log('segment +1')
@@ -214,16 +257,21 @@ class MotionLayer extends declared(Layer) {
 
 
         const loopSegments = asyncFunc.bind(this)
-        loopSegments().then((r: string) => { console.log(r) })
+        loopSegments().then((r: string) => { console.log('complete') })
     }
 
     private _drawExistingState() {
         const existingState = [];
-        // console.log('here')
         this.LayerLines.graphics.items.sort((a, b) => new Date(a.attributes.timespan.begin) - new Date(b.attributes.timespan.begin));
         for(let i = 0; i < this.state.segment; i++) {
             const tempArray = [];
             for(var j = 0; j < this.LayerLines.graphics.items[i].geometry.paths[0].length; j++) {
+
+                if(this.Categories !== undefined) {
+                    const category = this.LayerLines.graphics.items[i].attributes[this.catField];
+                    this.setColor(this.Categories[category]);
+                }
+                
                 if(this.state.segment === i) {
                     if(j > this.state.vertex) {
                         tempArray.push(
@@ -241,16 +289,16 @@ class MotionLayer extends declared(Layer) {
                 }
             }
             typeof(tempArray[0]) === "object" ? existingState.push(tempArray) : undefined;
+            this._draw(existingState);
         }
         // console.log(existingState)
-        this._draw(existingState);
+        
     }
 
     // draw just draw the line statically on the page
     private _draw(g: any) {
-        this.ctx.lineWidth = this.lineWidth;
-        this.ctx.strokeStyle = this.color;
         this.ctx.beginPath();
+        var g = simplify(g, 4)
         for (var i = 0; i < g.length; i ++) {
             this.ctx.moveTo(g[i][0].x, g[i][0].y);
             for (var j = 0; j < g[i].length; j++) {
@@ -382,7 +430,7 @@ class MotionLayer extends declared(Layer) {
     }
 
     private randomColor() {
-        var color = ["red", "green", "cyan", "yellow", "purple", "orange"]
+        var color = ["#ffc107", "#e91e63", "#673ab7", "#2196f3", "#4caf50", "#ffeb3b"]
         return color[Math.floor(Math.random() * 6)];
     }
 
@@ -405,6 +453,7 @@ class MotionLayer extends declared(Layer) {
     public getColor() {
         return this.color;
     }
+
 
 }
 

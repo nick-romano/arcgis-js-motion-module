@@ -28,26 +28,28 @@ view.when(function () {
         sourceType: "GEOJSON",
         view: view, 
         speed: 2, 
-        color: '#ffc107'
+        color: '#ffc107',
+        // catField: 'Category',
+
     });
 
-    const layer2 = new Motion.MotionLayer({ 
-        title: "8_21", 
-        source: data2.data2, 
-        sourceType: "GEOJSON",
-        view: view, 
-        speed: 2, 
-        color: '#8BC34A'
-    });
+    // const layer2 = new Motion.MotionLayer({ 
+    //     title: "8_21", 
+    //     source: data2.data2, 
+    //     sourceType: "GEOJSON",
+    //     view: view, 
+    //     speed: 2, 
+    //     color: '#8BC34A'
+    // });
 
-    const layer3 = new Motion.MotionLayer({ 
-        title: "8_19", 
-        source: data3.data3, 
-        sourceType: "GEOJSON",
-        view: view, 
-        speed: 2, 
-        color: '#2196f3'
-    });
+    // const layer3 = new Motion.MotionLayer({ 
+    //     title: "8_19", 
+    //     source: data3.data3, 
+    //     sourceType: "GEOJSON",
+    //     view: view, 
+    //     speed: 2, 
+    //     color: '#2196f3'
+    // });
 
     // const layer2 = new Motion.MotionLayer({ 
     //     title: "8_21", 
