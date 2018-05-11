@@ -205,6 +205,12 @@ class MotionLayer extends declared(Layer) {
             this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
             this._paint();
         });
+
+        this.view.watch('zoom', (a,b) => {
+            cancelAnimationFrame(this.anFrame);
+            this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+            this._paint();
+        })
     }
 
     private _recordChange(e: any) {
@@ -245,7 +251,7 @@ class MotionLayer extends declared(Layer) {
                     }
 
                     if(this.LayerLines.graphics.items[i].attributes.velocity) {
-                        this.setSpeed(this.LayerLines.graphics.items[i].attributes.velocity);
+                        this.setSpeed(this.LayerLines.graphics.items[i].attributes.velocity *.5);
                     };
 
                     await this._addVertexes(this.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined);

@@ -230,6 +230,11 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 _this.ctx.clearRect(0, 0, _this.ctx.canvas.width, _this.ctx.canvas.height);
                 _this._paint();
             });
+            this.view.watch('zoom', function (a, b) {
+                cancelAnimationFrame(_this.anFrame);
+                _this.ctx.clearRect(0, 0, _this.ctx.canvas.width, _this.ctx.canvas.height);
+                _this._paint();
+            });
         };
         MotionLayer.prototype._recordChange = function (e) {
             cancelAnimationFrame(this.anFrame);
@@ -272,7 +277,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                                     this.setColor(this.Categories[category]);
                                 }
                                 if (this.LayerLines.graphics.items[i].attributes.velocity) {
-                                    this.setSpeed(this.LayerLines.graphics.items[i].attributes.velocity);
+                                    this.setSpeed(this.LayerLines.graphics.items[i].attributes.velocity * .5);
                                 }
                                 ;
                                 return [4 /*yield*/, this._addVertexes(this.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined)];
