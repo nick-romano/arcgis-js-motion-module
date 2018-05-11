@@ -1,8 +1,8 @@
-define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module.js", "./data.js"], function (require, exports, EsriMap, MapView, Motion, data) {
+define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module.js", "./data.js", "./data2.js", "./data3.js"], function (require, exports, EsriMap, MapView, Motion, data, data2, data3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var map = new EsriMap({
-        basemap: "gray"
+        basemap: "gray-vector"
     });
     window.map = map;
     var view = new MapView({
@@ -14,13 +14,37 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
     view.when(function () {
         console.log('here');
         var layer = new Motion.MotionLayer({
-            title: "My Day",
-            source: data,
+            title: "8_20",
+            source: data.data,
             sourceType: "GEOJSON",
             view: view,
-            speed: .5,
+            speed: 2,
             color: '#ffc107'
         });
+        var layer2 = new Motion.MotionLayer({
+            title: "8_21",
+            source: data2.data2,
+            sourceType: "GEOJSON",
+            view: view,
+            speed: 2,
+            color: '#8BC34A'
+        });
+        var layer3 = new Motion.MotionLayer({
+            title: "8_19",
+            source: data3.data3,
+            sourceType: "GEOJSON",
+            view: view,
+            speed: 2,
+            color: '#2196f3'
+        });
+        // const layer2 = new Motion.MotionLayer({ 
+        //     title: "8_21", 
+        //     source: data2, 
+        //     sourceType: "GEOJSON",
+        //     view: view, 
+        //     speed: .5, 
+        //     color: 'black'
+        // });
         console.log(layer);
         // view.graphics.add(layer.LayerLines[1].graphic);
         console.log(view);

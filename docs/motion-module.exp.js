@@ -56,14 +56,13 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         __extends(MotionLayer, _super);
         function MotionLayer(args) {
             var _this = _super.call(this) || this;
-            _this.source = args["source"];
             _this.view = args["view"];
             _this.speed = args["speed"];
             _this.color = args["color"];
             _this.sourceType = args["sourceType"];
             _this.LayerLines = args["source"];
             _this.LayerPoints = args["source"];
-            _this.state = { segment: 0, vertex: 115 };
+            _this.state = { segment: 0, vertex: 55 };
             _this.lineWidth = 2;
             // start initializing layer
             _this._initView(args["view"]);
@@ -86,7 +85,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                             color: [255, 255, 255],
                             width: 4
                         });
-                        var geom = this.source.features.map(function (r) {
+                        var geom = value["data"].features.map(function (r) {
                             var obj = {};
                             obj.geometry = r.geometry;
                             obj.properties = r.properties;
@@ -130,7 +129,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         });
         Object.defineProperty(MotionLayer.prototype, "features", {
             get: function () {
-                var geom = this.source.features.map(function (r) {
+                var geom = this.source["data"].features.map(function (r) {
                     var obj = {};
                     obj.geometry = r.geometry;
                     obj.properties = r.properties;
@@ -146,8 +145,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 return this._LayerPoints;
             },
             set: function (value) {
-                console.log(value.features);
-                var geom = value.features.map(function (r) { return r.geometry; });
+                var geom = value["data"].features.map(function (r) { return r.geometry; });
                 var PointFeatures = geom.filter(function (r) { return r.type === "Point" ? r : null; });
                 var MarkerSymbol = new SimpleMarkerSymbol({
                     color: "black",
@@ -221,11 +219,10 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             this._paint();
         };
         MotionLayer.prototype._paint = function () {
-            this._drawExistingState();
-            this.LayerLines.graphics.items.sort(function (a, b) { return new Date(a.attributes.timespan.begin) - new Date(b.attributes.timespan.begin); });
+            // this._drawExistingState();
             function asyncFunc() {
                 return __awaiter(this, void 0, void 0, function () {
-                    var i;
+                    var i, vertexes;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
                             case 0:
@@ -234,10 +231,13 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                             case 1:
                                 if (!(i < this.LayerLines.graphics.items.length)) return [3 /*break*/, 4];
                                 if (!(i > this.state.segment - 1)) return [3 /*break*/, 3];
-                                return [4 /*yield*/, this._addVertexes(this.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined)];
+                                if (!(i === this.state.segment)) return [3 /*break*/, 3];
+                                vertexes = this.LayerLines.graphics.items[i].geometry.paths[0];
+                                return [4 /*yield*/, this._addVertexes(vertexes, undefined, undefined)];
                             case 2:
                                 _a.sent();
                                 this.state.segment += 1;
+                                this.state.vertex = 1;
                                 console.log('segment +1');
                                 _a.label = 3;
                             case 3:
@@ -253,13 +253,12 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         };
         MotionLayer.prototype._drawExistingState = function () {
             var existingState = [];
-            // console.log('here')
-            this.LayerLines.graphics.items.sort(function (a, b) { return new Date(a.attributes.timespan.begin) - new Date(b.attributes.timespan.begin); });
-            for (var i = 0; i < this.state.segment; i++) {
+            for (var i = 0; i <= this.state.segment; i++) {
                 var tempArray = [];
                 for (var j = 0; j < this.LayerLines.graphics.items[i].geometry.paths[0].length; j++) {
                     if (this.state.segment === i) {
-                        if (j > this.state.vertex) {
+                        console.log('match');
+                        if (j < this.state.vertex) {
                             tempArray.push(this.view.toScreen(new geometry_1.Point(this.LayerLines.graphics.items[i].geometry.paths[0][j])));
                         }
                     }
@@ -354,7 +353,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 _this.ctx.lineCap = "round";
                 _this.ctx.fillStyle = 'rgb(255,255,255)';
                 // variable to hold how many frames have elapsed in the animation
-                var t = 1;
+                var t = _this.state.vertex;
                 // t = 1;
                 // define the path to plot
                 var vertices = g.map(function (r) {
@@ -367,7 +366,10 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 _this.ctx.lineWidth = _this.lineWidth;
                 _this.ctx.strokeStyle = _this.color;
                 // calculate incremental points along the path
-                var points = calcWaypoints(vertices);
+                var points = calcWaypoints(vertices).filter(function (a, b) {
+                    return b > _this.state.vertex;
+                });
+                _this.currentPointArray = points;
                 // extend the line from start to finish with animation
                 var animate = function () {
                     if (t < points.length - 1) {
@@ -386,6 +388,8 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                     _this.ctx.stroke();
                     // increment "t" to get the next waypoint
                     t += 1;
+                    _this.state.vertex = t;
+                    // console.log(this.state.vertex);
                 };
                 animate.bind(_this);
                 animate();
@@ -422,4 +426,4 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
     }(decorators_1.declared(Layer)));
     exports.MotionLayer = MotionLayer;
 });
-//# sourceMappingURL=motion-module.js.map
+//# sourceMappingURL=motion-module.exp.js.map
