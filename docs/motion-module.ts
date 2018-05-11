@@ -251,7 +251,7 @@ class MotionLayer extends declared(Layer) {
                     }
 
                     if(this.LayerLines.graphics.items[i].attributes.velocity) {
-                        this.setSpeed(this.LayerLines.graphics.items[i].attributes.velocity *.5);
+                        // this.setSpeed(this.LayerLines.graphics.items[i].attributes.velocity *.5);
                     };
 
                     await this._addVertexes(this.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined);

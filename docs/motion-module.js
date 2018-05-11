@@ -277,7 +277,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                                     this.setColor(this.Categories[category]);
                                 }
                                 if (this.LayerLines.graphics.items[i].attributes.velocity) {
-                                    this.setSpeed(this.LayerLines.graphics.items[i].attributes.velocity * .5);
+                                    // this.setSpeed(this.LayerLines.graphics.items[i].attributes.velocity *.5);
                                 }
                                 ;
                                 return [4 /*yield*/, this._addVertexes(this.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined)];
