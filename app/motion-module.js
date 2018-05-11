@@ -280,6 +280,8 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                                 _a.sent();
                                 this.state.segment += 1;
                                 console.log('segment +1');
+                                this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+                                this._drawExistingState();
                                 _a.label = 3;
                             case 3:
                                 i++;
