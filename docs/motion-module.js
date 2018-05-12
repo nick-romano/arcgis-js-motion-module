@@ -215,25 +215,20 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         };
         MotionLayer.prototype._initListeners = function () {
             var _this = this;
-            this.view.on("drag", function () {
-                cancelAnimationFrame(_this.anFrame);
-                _this.ctx.clearRect(0, 0, _this.ctx.canvas.width, _this.ctx.canvas.height);
-                _this._paint();
+            this.view.on("drag", function (e) {
+                _this._recordChange(e);
             });
-            this.view.on("pointer-down", function () {
-                cancelAnimationFrame(_this.anFrame);
-                _this.ctx.clearRect(0, 0, _this.ctx.canvas.width, _this.ctx.canvas.height);
-                _this._paint();
+            this.view.on("pointer-down", function (e) {
+                _this._recordChange(e);
             });
-            this.view.on("hold", function () {
-                cancelAnimationFrame(_this.anFrame);
-                _this.ctx.clearRect(0, 0, _this.ctx.canvas.width, _this.ctx.canvas.height);
-                _this._paint();
+            this.view.on("hold", function (e) {
+                _this._recordChange(e);
             });
-            this.view.watch('zoom', function (a, b) {
-                cancelAnimationFrame(_this.anFrame);
-                _this.ctx.clearRect(0, 0, _this.ctx.canvas.width, _this.ctx.canvas.height);
-                _this._paint();
+            this.view.watch('zoom', function (e) {
+                _this._recordChange(e);
+            });
+            this.view.watch('rotation', function (e) {
+                _this._recordChange(e);
             });
         };
         MotionLayer.prototype._recordChange = function (e) {
@@ -328,7 +323,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 this.ctx.moveTo(g[i][0].x, g[i][0].y);
                 for (var j = 0; j < g[i].length; j++) {
                     this.ctx.lineTo(g[i][j].x, g[i][j].y);
-                    if (j === g.length - 1) {
+                    if (j === 0) {
                         this.ctx.fillText(g[i][j].attribute, g[i][j].x, g[i][j].y);
                     }
                 }

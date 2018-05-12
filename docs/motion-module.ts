@@ -188,29 +188,26 @@ class MotionLayer extends declared(Layer) {
     }
 
     private _initListeners() {
-        this.view.on("drag", () => {
-            cancelAnimationFrame(this.anFrame);
-            this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-            this._paint();
+        this.view.on("drag", (e) => {
+            this._recordChange(e);
         });
 
-        this.view.on("pointer-down", () => {
-            cancelAnimationFrame(this.anFrame);
-            this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-            this._paint();
+        this.view.on("pointer-down", (e) => {
+            this._recordChange(e);
         });
 
-        this.view.on("hold", () => {
-            cancelAnimationFrame(this.anFrame);
-            this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-            this._paint();
+        this.view.on("hold", (e) => {
+            this._recordChange(e);
         });
 
-        this.view.watch('zoom', (a,b) => {
-            cancelAnimationFrame(this.anFrame);
-            this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-            this._paint();
+        this.view.watch('zoom', (e) => {
+            this._recordChange(e);
         })
+
+        this.view.watch('rotation', (e) => {
+            this._recordChange(e);
+        })
+        
     }
 
     private _recordChange(e: any) {
@@ -305,7 +302,7 @@ class MotionLayer extends declared(Layer) {
             this.ctx.moveTo(g[i][0].x, g[i][0].y);
             for (var j = 0; j < g[i].length; j++) {
                 this.ctx.lineTo(g[i][j].x, g[i][j].y);
-                if (j === g.length - 1) {
+                if (j === 0) {
                     this.ctx.fillText(g[i][j].attribute, g[i][j].x, g[i][j].y)
                 } 
             }
