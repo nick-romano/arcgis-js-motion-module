@@ -176,7 +176,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             set: function (Field) {
                 var _this = this;
                 var allValues = this.LayerLines.graphics.items.map(function (r) { return r.attributes[Field]; });
-                console.log(allValues);
+                // console.log(allValues)
                 var catFields = allValues.filter(function (v, i, a) { return a.indexOf(v) === i; });
                 var catColorArray = {};
                 function getColor() {
@@ -191,7 +191,6 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                     }
                     return color;
                 }
-                console.log('here');
                 catFields.map(function (r) {
                     // const FinalColor = getColor();
                     catColorArray[r] = _this.randomColor();
@@ -215,19 +214,13 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         };
         MotionLayer.prototype._initListeners = function () {
             var _this = this;
-            this.view.on("drag", function (e) {
-                _this._recordChange(e);
-            });
-            this.view.on("pointer-down", function (e) {
-                _this._recordChange(e);
-            });
-            this.view.on("hold", function (e) {
+            this.view.watch('rotation', function (e) {
                 _this._recordChange(e);
             });
             this.view.watch('zoom', function (e) {
                 _this._recordChange(e);
             });
-            this.view.watch('rotation', function (e) {
+            this.view.watch('extent', function (e) {
                 _this._recordChange(e);
             });
         };
@@ -279,7 +272,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                             case 2:
                                 _a.sent();
                                 this.state.segment += 1;
-                                console.log('segment +1');
+                                //console.log('segment +1');
                                 this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
                                 this._drawExistingState();
                                 _a.label = 3;
@@ -292,7 +285,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 });
             }
             var loopSegments = asyncFunc.bind(this);
-            loopSegments().then(function (r) { console.log('complete'); });
+            loopSegments().then(function (r) { });
         };
         MotionLayer.prototype._drawExistingState = function () {
             var existingState = [];
@@ -318,7 +311,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         MotionLayer.prototype._draw = function (g) {
             this.ctx.beginPath();
             var g = simplify(g, 4);
-            console.log(g);
+            // console.log(g)
             for (var i = 0; i < g.length; i++) {
                 this.ctx.moveTo(g[i][0].x, g[i][0].y);
                 for (var j = 0; j < g[i].length; j++) {

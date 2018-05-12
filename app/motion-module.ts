@@ -149,7 +149,7 @@ class MotionLayer extends declared(Layer) {
 
     set Categories(Field: string) {
         const allValues = this.LayerLines.graphics.items.map((r) => r.attributes[Field]);
-        console.log(allValues)
+        // console.log(allValues)
         const catFields = allValues.filter((v, i, a) => a.indexOf(v) === i); 
         const catColorArray = {};
 
@@ -165,7 +165,6 @@ class MotionLayer extends declared(Layer) {
             return color;
         }
 
-        console.log('here')
 
         catFields.map((r) => {
             // const FinalColor = getColor();
@@ -188,15 +187,7 @@ class MotionLayer extends declared(Layer) {
     }
 
     private _initListeners() {
-        this.view.on("drag", (e) => {
-            this._recordChange(e);
-        });
-
-        this.view.on("pointer-down", (e) => {
-            this._recordChange(e);
-        });
-
-        this.view.on("hold", (e) => {
+        this.view.watch('rotation', (e) => {
             this._recordChange(e);
         });
 
@@ -204,7 +195,7 @@ class MotionLayer extends declared(Layer) {
             this._recordChange(e);
         })
 
-        this.view.watch('rotation', (e) => {
+        this.view.watch('extent', (e) => {
             this._recordChange(e);
         })
         
@@ -253,7 +244,7 @@ class MotionLayer extends declared(Layer) {
 
                     await this._addVertexes(this.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined);
                     this.state.segment += 1;
-                    console.log('segment +1');
+                    //console.log('segment +1');
                     this.ctx.clearRect(0,0, this.ctx.canvas.width, this.ctx.canvas.height)
                     this._drawExistingState();
                 }
@@ -262,7 +253,7 @@ class MotionLayer extends declared(Layer) {
 
 
         const loopSegments = asyncFunc.bind(this)
-        loopSegments().then((r: string) => { console.log('complete'); })
+        loopSegments().then((r: string) => { /* console.log('complete'); */ })
     }
 
     private _drawExistingState() {
@@ -297,7 +288,7 @@ class MotionLayer extends declared(Layer) {
     private _draw(g: any) {
         this.ctx.beginPath();
         var g = simplify(g, 4);
-        console.log(g)
+        // console.log(g)
         for (var i = 0; i < g.length; i ++) {
             this.ctx.moveTo(g[i][0].x, g[i][0].y);
             for (var j = 0; j < g[i].length; j++) {
