@@ -277,7 +277,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                                     this.setColor(this.Categories[category]);
                                 }
                                 if (this.LayerLines.graphics.items[i].attributes.velocity) {
-                                    // this.setSpeed(this.LayerLines.graphics.items[i].attributes.velocity *.5);
+                                    this.setSpeed(this.LayerLines.graphics.items[i].attributes.velocity * .5);
                                 }
                                 ;
                                 return [4 /*yield*/, this._addVertexes(this.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined)];
@@ -310,12 +310,16 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                         this.setColor(this.Categories[category]);
                     }
                     if (this.state.segment === i) {
+                        var point = this.view.toScreen(new geometry_1.Point(this.LayerLines.graphics.items[i].geometry.paths[0][j]));
+                        point.attribute = this.LayerLines.graphics.items[i].attributes.Category;
                         if (j > this.state.vertex) {
-                            tempArray.push(this.view.toScreen(new geometry_1.Point(this.LayerLines.graphics.items[i].geometry.paths[0][j])));
+                            tempArray.push(point);
                         }
                     }
                     else {
-                        tempArray.push(this.view.toScreen(new geometry_1.Point(this.LayerLines.graphics.items[i].geometry.paths[0][j])));
+                        var point = this.view.toScreen(new geometry_1.Point(this.LayerLines.graphics.items[i].geometry.paths[0][j]));
+                        point.attribute = new Date(this.LayerLines.graphics.items[i].attributes.timespan.end).toISOString();
+                        tempArray.push(point);
                     }
                 }
                 typeof (tempArray[0]) === "object" ? existingState.push(tempArray) : undefined;
@@ -327,12 +331,21 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         MotionLayer.prototype._draw = function (g) {
             this.ctx.beginPath();
             var g = simplify(g, 4);
+            console.log(g);
             for (var i = 0; i < g.length; i++) {
                 this.ctx.moveTo(g[i][0].x, g[i][0].y);
                 for (var j = 0; j < g[i].length; j++) {
                     this.ctx.lineTo(g[i][j].x, g[i][j].y);
+                    if (j === g.length - 1) {
+                        this.ctx.fillText(g[i][j].attribute, g[i][j].x, g[i][j].y);
+                    }
                 }
             }
+            this.ctx.shadowColor = "rgba(0,0,0,1)";
+            this.ctx.shadowBlur = 2;
+            this.ctx.lineJoin = 'round';
+            // this.ctx.lineCap = 'round';
+            //this.ctx.lineJoin = 'round';
             this.ctx.stroke();
         };
         MotionLayer.prototype._addVertexes = function (vertexArray, event, change) {
