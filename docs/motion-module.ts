@@ -280,25 +280,14 @@ class MotionLayer extends declared(Layer) {
                     this.setColor(this.Categories[category]);
                 }
                 
-                if(this.state.segment === i) {
-                    var point = this.view.toScreen(
-                            new Point(this.LayerLines.graphics.items[i].geometry.paths[0][j])
-                        )
-                        point.attribute = this.LayerLines.graphics.items[i].attributes.Category;
-                    if(j > this.state.vertex) {
-                        tempArray.push(
-                            point
-                        );
-                    }
-                } else {
-                    var point = this.view.toScreen(
-                            new Point(this.LayerLines.graphics.items[i].geometry.paths[0][j])
-                        )
-                        point.attribute = new Date(this.LayerLines.graphics.items[i].attributes.timespan.end).toISOString();
-                    tempArray.push(
-                        point
-                    );
-                }
+                var point = this.view.toScreen(
+                        new Point(this.LayerLines.graphics.items[i].geometry.paths[0][j])
+                    )
+                    // point.attribute = new Date(this.LayerLines.graphics.items[i].attributes.timespan.end).toGMTString();
+                    point.attribute = this.LayerLines.graphics.items[i].attributes.Category
+                tempArray.push(
+                    point
+                );
             }
             typeof(tempArray[0]) === "object" ? existingState.push(tempArray) : undefined;
             this._draw(existingState);
