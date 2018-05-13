@@ -210,8 +210,33 @@ class MotionLayer extends declared(Layer) {
     }
 
     private _initCustomGraphics(layer: object) {
+
+        var PIXEL_RATIO = (function () {
+            var ctx = document.createElement("canvas").getContext("2d"),
+                dpr = window.devicePixelRatio || 1,
+                bsr = ctx.webkitBackingStorePixelRatio ||
+                      ctx.mozBackingStorePixelRatio ||
+                      ctx.msBackingStorePixelRatio ||
+                      ctx.oBackingStorePixelRatio ||
+                      ctx.backingStorePixelRatio || 1;
+        
+            return dpr / bsr;
+        })();
+        
+        
+        var createHiDPICanvas = function(w, h, ratio) {
+            if (!ratio) { ratio = PIXEL_RATIO; }
+            var can = document.createElement("canvas");
+            can.width = w * ratio;
+            can.height = h * ratio;
+            can.style.width = w + "px";
+            can.style.height = h + "px";
+            can.getContext("2d").setTransform(ratio, 0, 0, ratio, 0, 0);
+            return can;
+        };
+        
         var initCanvas = document.querySelector('.esri-display-object');
-        var proto = document.createElement("canvas");
+        var proto = createHiDPICanvas(screen.width, screen.height, PIXEL_RATIO);
         proto.id = this.title;
         var rootDiv = document.querySelector('g');
         this.ctx = proto.getContext("2d");
@@ -223,8 +248,8 @@ class MotionLayer extends declared(Layer) {
         this.ctx.strokeStyle = this.color;
         this.ctx.font = '12px Avenir Next W00';
         this.ctx.lineCap = "round";
-        this.ctx.shadowColor = this.shadowBlur ? "rgba(0,0,0,1)" : undefined;
-        this.ctx.shadowBlur = this.shadowBlur ? 2 : undefined;
+        // this.ctx.shadowColor = this.shadowBlur ? "rgba(0,0,0,1)" : undefined;
+        // this.ctx.shadowBlur = this.shadowBlur ? 2 : undefined;
         this.ctx.lineJoin = 'round';
         this.ctx.fillStyle = 'rgba(0, 0, 0, .8)';
         // this.view.zoom = this.view.zoom + 1;
