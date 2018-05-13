@@ -1,4 +1,4 @@
-define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module.js", "./data.js", "./data2.js", "./data3.js"], function (require, exports, EsriMap, MapView, Motion, data, data2, data3) {
+define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module.js", "./data/data.js", "./data/data2.js", "./data/data3.js"], function (require, exports, EsriMap, MapView, Motion, data, data2, data3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var map = new EsriMap({
@@ -18,57 +18,25 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
             source: data.data,
             sourceType: "GEOJSON",
             view: view,
-            speed: 2,
-            color: '#ffc107'
+            speed: 4,
+            color: '#ffc107',
         });
         var layer2 = new Motion.MotionLayer({
             title: "8_21",
             source: data2.data2,
             sourceType: "GEOJSON",
             view: view,
-            speed: 2,
-            color: '#8BC34A'
+            speed: 4,
+            color: '#8BC34A',
         });
         var layer3 = new Motion.MotionLayer({
             title: "8_19",
             source: data3.data3,
             sourceType: "GEOJSON",
             view: view,
-            speed: 2,
-            color: '#2196f3'
+            speed: 4,
+            color: '#2196f3',
         });
-        // const layer2 = new Motion.MotionLayer({ 
-        //     title: "8_21", 
-        //     source: data2, 
-        //     sourceType: "GEOJSON",
-        //     view: view, 
-        //     speed: .5, 
-        //     color: 'black'
-        // });
-        console.log(layer);
-        // view.graphics.add(layer.LayerLines[1].graphic);
-        console.log(view);
-        // initCustomGraphics(layer);
-        var start, end, change;
-        // view.on("drag", function (event) {
-        //     if(event.action === "start") {
-        //         start = {x: event.x, y: event.y};
-        //     }else if(event.action === "end") {
-        //         end = { x: event.x, y: event.y };
-        //         change = {x: end.x - start.x, y: end.y - start.y }
-        //     }
-        //     if(change) {
-        //     addVertexes(layer, event, change);
-        //     }
-        // })
-        // view.on("pointer-down", function (event) {
-        // })
-        // view.on("resize", function (event) {
-        // })
-        // view.on("immediate-click", function (event) {
-        // })
-        // view.on("layerview-create", function (event) {
-        // })
     });
 });
 //# sourceMappingURL=map.js.map

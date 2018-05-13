@@ -2,9 +2,9 @@ import EsriMap = require("esri/Map");
 import MapView = require("esri/views/MapView");
 import FeatureLayer = require("esri/layers/FeatureLayer");
 import Motion = require("./motion-module.js");
-import data = require("./data.js");
-import data2 = require("./data2.js");
-import data3 = require("./data3.js");
+import data = require("./data/data.js");
+import data2 = require("./data/data2.js");
+import data3 = require("./data/data3.js");
 import { Point, Polygon, Polyline } from "esri/geometry";
 import lang = require("dojo/_base/lang");
 
@@ -27,8 +27,9 @@ view.when(function () {
         source: data.data, 
         sourceType: "GEOJSON",
         view: view, 
-        speed: 2, 
-        color: '#ffc107'
+        speed: 4, 
+        color: '#ffc107',
+        // catField: 'Category',
     });
 
     const layer2 = new Motion.MotionLayer({ 
@@ -36,8 +37,9 @@ view.when(function () {
         source: data2.data2, 
         sourceType: "GEOJSON",
         view: view, 
-        speed: 2, 
-        color: '#8BC34A'
+        speed: 4, 
+        color: '#8BC34A',
+        // catField: 'Category',
     });
 
     const layer3 = new Motion.MotionLayer({ 
@@ -45,48 +47,8 @@ view.when(function () {
         source: data3.data3, 
         sourceType: "GEOJSON",
         view: view, 
-        speed: 2, 
-        color: '#2196f3'
+        speed: 4, 
+        color: '#2196f3',
+        // catField: 'Category',
     });
-
-    // const layer2 = new Motion.MotionLayer({ 
-    //     title: "8_21", 
-    //     source: data2, 
-    //     sourceType: "GEOJSON",
-    //     view: view, 
-    //     speed: .5, 
-    //     color: 'black'
-    // });
-    console.log(layer)
-    // view.graphics.add(layer.LayerLines[1].graphic);
-
-    console.log(view)
-    // initCustomGraphics(layer);
-    let start, end, change;
-
-    // view.on("drag", function (event) {
-    //     if(event.action === "start") {
-    //         start = {x: event.x, y: event.y};
-    //     }else if(event.action === "end") {
-    //         end = { x: event.x, y: event.y };
-    //         change = {x: end.x - start.x, y: end.y - start.y }
-    //     }
-
-    //     if(change) {
-    //     addVertexes(layer, event, change);
-    //     }
-    // })
-
-    // view.on("pointer-down", function (event) {
-    // })
-
-    // view.on("resize", function (event) {
-    // })
-
-    // view.on("immediate-click", function (event) {
-    // })
-
-    // view.on("layerview-create", function (event) {
-    // })
-
 });
