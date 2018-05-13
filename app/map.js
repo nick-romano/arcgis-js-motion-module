@@ -31,7 +31,7 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
             times.map(function (r, i) {
                 if (date > r) {
                     var blah = new Motion.MotionLayer({
-                        title: "8_21",
+                        title: i,
                         source: FullData[Object.keys(FullData)[i]],
                         sourceType: "GEOJSON",
                         view: view,
@@ -63,7 +63,7 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
         proto.height = window.innerHeight;
         var clockCTX = proto.getContext('2d');
         clockCTX.canvas.style.position = 'absolute';
-        clockCTX.canvas.style.zIndex = '2';
+        clockCTX.canvas.style.zIndex = '0';
         initCanvas.insertAdjacentElement('beforebegin', clockCTX.canvas);
         clockCTX.fillStyle = 'black';
         clockCTX.font = "30px Arial";

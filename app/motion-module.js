@@ -231,12 +231,12 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         MotionLayer.prototype._initCustomGraphics = function (layer) {
             var initCanvas = document.querySelector('.esri-display-object');
             var proto = document.createElement("canvas");
-            proto.id = "motionLayer";
+            proto.id = this.title;
             var rootDiv = document.querySelector('g');
             this.ctx = proto.getContext("2d");
             this.ctx.canvas.style.position = 'absolute';
             this.ctx.canvas.style.zIndex = '0';
-            initCanvas.insertAdjacentElement('beforebegin', this.ctx.canvas);
+            initCanvas.insertAdjacentElement('afterend', this.ctx.canvas);
             this.ctx.canvas.width = screen.width;
             this.ctx.canvas.height = screen.height;
             this.ctx.strokeStyle = this.color;

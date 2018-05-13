@@ -231,17 +231,18 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         MotionLayer.prototype._initCustomGraphics = function (layer) {
             var initCanvas = document.querySelector('.esri-display-object');
             var proto = document.createElement("canvas");
-            proto.id = "motionLayer";
+            proto.id = this.title;
             var rootDiv = document.querySelector('g');
             this.ctx = proto.getContext("2d");
             this.ctx.canvas.style.position = 'absolute';
             this.ctx.canvas.style.zIndex = '0';
-            initCanvas.insertAdjacentElement('beforebegin', this.ctx.canvas);
+            initCanvas.insertAdjacentElement('afterend', this.ctx.canvas);
             this.ctx.canvas.width = screen.width;
             this.ctx.canvas.height = screen.height;
             this.ctx.strokeStyle = this.color;
             this.ctx.font = '12px Avenir Next W00';
             this.ctx.lineCap = "round";
+            this.ctx.shadowColor = this.shadowBlur ? "rgba(0,0,0,1)" : undefined;
             this.ctx.shadowBlur = this.shadowBlur ? 2 : undefined;
             this.ctx.lineJoin = 'round';
             this.ctx.fillStyle = 'rgba(0, 0, 0, .8)';
@@ -336,8 +337,8 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             this.Categories ? this.ctx.strokeStyle = g[0][0].vectorColor : undefined;
             // this.ctx.lineCap = 'round';
             //this.ctx.lineJoin = 'round';
-            this.shadowBlur ? this.ctx.shadowBlur = 2 : this.ctx.shadowBlur = 0;
-            this.ctx.shadowColor = 'rgba(0,0,0,.9)';
+            this.ctx.shadowBlur = 0;
+            this.ctx.shadowColor = 'white';
             this.ctx.stroke();
             this.ctx.shadowBlur = 2;
             this.ctx.shadowColor = 'white';

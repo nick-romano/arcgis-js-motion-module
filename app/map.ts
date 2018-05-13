@@ -51,7 +51,7 @@ view.when(function () {
         times.map((r, i) => {
             if( date > r ) {
                 const blah = new Motion.MotionLayer({ 
-                    title: "8_21", 
+                    title: i, 
                     source: FullData[Object.keys(FullData)[i]], 
                     sourceType: "GEOJSON",
                     view: view, 
@@ -87,7 +87,7 @@ view.when(function () {
     proto.height = window.innerHeight;
     var clockCTX = proto.getContext('2d');
     clockCTX.canvas.style.position = 'absolute';
-    clockCTX.canvas.style.zIndex = '2';
+    clockCTX.canvas.style.zIndex = '0';
     initCanvas.insertAdjacentElement('beforebegin', clockCTX.canvas)
     clockCTX.fillStyle = 'black';
     clockCTX.font="30px Arial";
