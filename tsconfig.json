@@ -12,7 +12,12 @@
     },
     "include": [
         "./app/*",
-        "./docs/*"
+        "./docs/*",
+        "./app/data/*",
+        "./apps/data/flights/*",
+        "./docs/data/*",
+        "./docs/data/flights/*",
+        "./docs/demos/flights/*",
     ],
     "exclude": [
         "node_modules"

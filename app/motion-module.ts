@@ -9,7 +9,8 @@ import MapView = require("esri/views/MapView")
 import { Point, Polygon, Polyline } from "esri/geometry";
 import { subclass, property, declared } from "esri/core/accessorSupport/decorators";
 import watchUtils = require("esri/core/watchUtils");
-import simplify = require("./simplify.js");
+import { RGBColor } from "../node_modules/@types/d3/index";
+import { GeoJsonObject } from "../node_modules/@types/geojson/index";
 
 @subclass("esri/layers/MotionLayer")
 class MotionLayer extends declared(Layer) {
@@ -23,27 +24,29 @@ class MotionLayer extends declared(Layer) {
     ctx: CanvasRenderingContext2D;
     CustomExtent: Extent;
     speed: number;
-    color: Color;
+    color: RGBColor;
     lineWidth: number;
     state: {segment: number, vertex: number};
+    catField: string;
+    labelField: string;
+
 
 
     constructor(args: object) {
         super()
-        this.source = args["source"];
-        this.catField = args["catField"];
-        this.view = args["view"];
-        this.speed = args["speed"];
-        this.color = args["color"];
+        this.source = args["source"]? args["source"] : console.error('Source data is required');
+        this.catField = args["catField"] ? args["catField"] : undefined;
+        this.view = args["view"] ? args["view"] : console.error('please pass your view as parameter');
+        this.speed = args["speed"] ? args["speed"] : 1;
+        this.color = args["color"] ? args["color"] : 'black';
         this.sourceType = args["sourceType"];
         this.LayerLines = args["source"];
         this.LayerPoints = args["source"];
-        this.Categories = args["catField"];
-        this.state = {segment:0, vertex:115};
-        this.lineWidth = 2;
-
-        // start initializing layer
-        this._initView(args["view"])
+        this.Categories = args["catField"] ? args["catField"] : undefined;
+        this.state = {segment:0, vertex: 0};
+        this.lineWidth = args["width"] ? args["width"] : 2;
+        this.shadowBlur = args["shadowBlur"];
+        this.labelField = args["labelField"];
 
         //for dev
         window.layer = this;
@@ -217,13 +220,18 @@ class MotionLayer extends declared(Layer) {
         initCanvas.insertAdjacentElement('beforebegin', this.ctx.canvas)
         this.ctx.canvas.width = screen.width;
         this.ctx.canvas.height = screen.height;
-        this.view.extent = layer.CustomExtent;
         this.ctx.strokeStyle = this.color;
+        this.ctx.font = '12px Avenir Next W00';
         this.ctx.lineCap = "round";
-        this.ctx.fillStyle = 'rgb(255,255,255)';
+        this.ctx.shadowColor = this.shadowBlur ? "rgba(0,0,0,1)" : undefined;
+        this.ctx.shadowBlur = this.shadowBlur ? 2 : undefined;
+        this.ctx.lineJoin = 'round';
+        this.ctx.fillStyle = 'rgba(0, 0, 0, .8)';
         // this.view.zoom = this.view.zoom + 1;
         // bouncingBall(layer);
         // vertexes for line segment
+
+
         this._paint();
     }
 
@@ -278,8 +286,7 @@ class MotionLayer extends declared(Layer) {
                     )
 
                     // set label based on category
-                    // point.attribute = new Date(this.LayerLines.graphics.items[i].attributes.timespan.end).toGMTString();
-                    point.attribute = this.LayerLines.graphics.items[i].attributes.Category;
+                    this.labelField ? point.attribute = this.LayerLines.graphics.items[i].attributes[this.labelField] : undefined;
                     this.Categories ? point.vectorColor = this.Categories[this.LayerLines.graphics.items[i].attributes[this.catField]] : undefined;
 
                 tempArray.push(
@@ -296,24 +303,33 @@ class MotionLayer extends declared(Layer) {
     private _draw(g: any) {
         
         this.ctx.beginPath();
-        var g = simplify(g, 4);
+        var g = this.simplify(g, 4, false);
         for (var i = 0; i < g.length; i ++) {
             this.ctx.moveTo(g[i][0].x, g[i][0].y);
+            // for (var j = 0; j < g[i].length - 1; j++) {
+            //     this.ctx.quadraticCurveTo(g[i][j].x, g[i][j].y, g[i][j+1].x, g[i][j+1].y);
+            //     if (j === 0) {
+            //         // this.ctx.fillText(g[i][j].attribute, g[i][j].x, g[i][j].y)
+            //     } 
+            // }
+
             for (var j = 0; j < g[i].length; j++) {
                 this.ctx.lineTo(g[i][j].x, g[i][j].y);
                 if (j === 0) {
-                    this.ctx.fillText(g[i][j].attribute, g[i][j].x, g[i][j].y)
+    
                 } 
             }
         }
-        this.ctx.shadowColor = "rgba(0,0,0,1)";
-        this.ctx.shadowBlur = 2;
-        this.ctx.lineJoin = 'round';
         // console.log(g)
         this.Categories ? this.ctx.strokeStyle = g[0][0].vectorColor : undefined;
         // this.ctx.lineCap = 'round';
         //this.ctx.lineJoin = 'round';
+        this.ctx.shadowBlur = 0;
+        this.ctx.shadowColor = 'white';
         this.ctx.stroke();
+        this.ctx.shadowBlur = 2;
+        this.ctx.shadowColor = 'white';
+        this.labelField ? this.ctx.fillText(g[0][0].attribute, g[0][0].x, g[0][0].y) : undefined;
     }
 
     private _addVertexes(vertexArray: any, event: object, change: object) {
@@ -338,6 +354,7 @@ class MotionLayer extends declared(Layer) {
         let calcWaypoints = function (vertices: Array<Point>) {
 
             var waypoints = [];
+            // vertices = simplify(vertices, 4, true);
             for (var i = 1; i < vertices.length; i++) {
                 var pt0 = vertices[i - 1];
                 var pt1 = vertices[i];
@@ -457,6 +474,144 @@ class MotionLayer extends declared(Layer) {
         return this.color;
     }
 
+    public addToMap() {
+        // start initializing layer
+        this._initView(this.view);
+    }
+
+    public zoomTo() {
+        this.view.extent = this.CustomExtent;
+    }
+
+    private simplify(points, tolerance, highestQuality) {
+
+        /*
+        (c) 2017, Vladimir Agafonkin
+        Simplify.js, a high-performance JS polyline simplification library
+        mourner.github.io/simplify-js
+        */
+
+        if (points.length <= 2) return points;
+    
+        var sqTolerance = tolerance !== undefined ? tolerance * tolerance : 1;
+    
+        points = highestQuality ? points : this.simplifyRadialDist(points, sqTolerance);
+        points = this.simplifyDouglasPeucker(points, sqTolerance);
+    
+        return points;
+    }
+
+    private simplifyDPStep(points, first, last, sqTolerance, simplified) {
+        /*
+        (c) 2017, Vladimir Agafonkin
+        Simplify.js, a high-performance JS polyline simplification library
+        mourner.github.io/simplify-js
+        */
+        var maxSqDist = sqTolerance,
+            index;
+    
+        for (var i = first + 1; i < last; i++) {
+            var sqDist = this.getSqSegDist(points[i], points[first], points[last]);
+    
+            if (sqDist > maxSqDist) {
+                index = i;
+                maxSqDist = sqDist;
+            }
+        }
+    
+        if (maxSqDist > sqTolerance) {
+            if (index - first > 1) this.simplifyDPStep(points, first, index, sqTolerance, simplified);
+            simplified.push(points[index]);
+            if (last - index > 1) this.simplifyDPStep(points, index, last, sqTolerance, simplified);
+        }
+    }
+    
+    // simplification using Ramer-Douglas-Peucker algorithm
+    private simplifyDouglasPeucker(points, sqTolerance) {
+        /*
+        (c) 2017, Vladimir Agafonkin
+        Simplify.js, a high-performance JS polyline simplification library
+        mourner.github.io/simplify-js
+        */
+        var last = points.length - 1;
+    
+        var simplified = [points[0]];
+        this.simplifyDPStep(points, 0, last, sqTolerance, simplified);
+        simplified.push(points[last]);
+    
+        return simplified;
+    }
+
+    private getSqDist(p1, p2) {
+        /*
+        (c) 2017, Vladimir Agafonkin
+        Simplify.js, a high-performance JS polyline simplification library
+        mourner.github.io/simplify-js
+        */
+
+        var dx = p1.x - p2.x,
+            dy = p1.y - p2.y;
+    
+        return dx * dx + dy * dy;
+    }
+    
+    // square distance from a point to a segment
+    private getSqSegDist(p, p1, p2) {
+        /*
+        (c) 2017, Vladimir Agafonkin
+        Simplify.js, a high-performance JS polyline simplification library
+        mourner.github.io/simplify-js
+        */
+    
+        var x = p1.x,
+            y = p1.y,
+            dx = p2.x - x,
+            dy = p2.y - y;
+    
+        if (dx !== 0 || dy !== 0) {
+    
+            var t = ((p.x - x) * dx + (p.y - y) * dy) / (dx * dx + dy * dy);
+    
+            if (t > 1) {
+                x = p2.x;
+                y = p2.y;
+    
+            } else if (t > 0) {
+                x += dx * t;
+                y += dy * t;
+            }
+        }
+    
+        dx = p.x - x;
+        dy = p.y - y;
+    
+        return dx * dx + dy * dy;
+    }
+
+    private simplifyRadialDist(points, sqTolerance) {
+        /*
+        (c) 2017, Vladimir Agafonkin
+        Simplify.js, a high-performance JS polyline simplification library
+        mourner.github.io/simplify-js
+        */
+    
+        var prevPoint = points[0],
+            newPoints = [prevPoint],
+            point;
+    
+        for (var i = 1, len = points.length; i < len; i++) {
+            point = points[i];
+    
+            if (this.getSqDist(point, prevPoint) > sqTolerance) {
+                newPoints.push(point);
+                prevPoint = point;
+            }
+        }
+    
+        if (prevPoint !== point) newPoints.push(point);
+    
+        return newPoints;
+    }
 
 }
 

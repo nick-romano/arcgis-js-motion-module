@@ -20,7 +20,10 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
             view: view,
             speed: 4,
             color: '#ffc107',
+            labelField: "Category",
+            shadowBlur: true,
         });
+        layer.addToMap();
         var layer2 = new Motion.MotionLayer({
             title: "8_21",
             source: data2.data2,
@@ -28,7 +31,10 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
             view: view,
             speed: 4,
             color: '#8BC34A',
+            labelField: "Category",
+            shadowBlur: true,
         });
+        layer2.addToMap();
         var layer3 = new Motion.MotionLayer({
             title: "8_19",
             source: data3.data3,
@@ -36,7 +42,11 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
             view: view,
             speed: 4,
             color: '#2196f3',
+            labelField: "Category",
+            shadowBlur: true,
         });
+        layer3.addToMap();
+        layer3.zoomTo();
     });
 });
 //# sourceMappingURL=map.js.map

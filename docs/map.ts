@@ -29,9 +29,11 @@ view.when(function () {
         view: view, 
         speed: 4, 
         color: '#ffc107',
+        labelField: "Category",
+        shadowBlur: true,
         // catField: 'Category',
     });
-
+    layer.addToMap()
     const layer2 = new Motion.MotionLayer({ 
         title: "8_21", 
         source: data2.data2, 
@@ -39,8 +41,11 @@ view.when(function () {
         view: view, 
         speed: 4, 
         color: '#8BC34A',
+        labelField: "Category",
+        shadowBlur: true,
         // catField: 'Category',
     });
+    layer2.addToMap()
 
     const layer3 = new Motion.MotionLayer({ 
         title: "8_19", 
@@ -49,6 +54,10 @@ view.when(function () {
         view: view, 
         speed: 4, 
         color: '#2196f3',
+        labelField: "Category",
+        shadowBlur: true,
         // catField: 'Category',
     });
+    layer3.addToMap();
+    layer3.zoomTo();
 });

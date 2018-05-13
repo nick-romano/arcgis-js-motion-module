@@ -1,4 +1,4 @@
-define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module.js", "./data/flights/TY7.js", "./data/flights/DLH414.js", "./data/flights/UAL925.js", "./data/flights/UAL1140.js", "./data/flights/UAL933.js", "./data/flights/UAL1133.js", "./data/flights/UAL3872.js", "./data/flights/UAL1669.js"], function (require, exports, EsriMap, MapView, Motion, TY7, DLH414, UAL925, UAL1140, UAL933, UAL1133, UAL3872, UAL1669) {
+define(["require", "exports", "esri/Map", "esri/views/MapView", "./../../motion-module.js", "../../data/flights/TY7.js", "../../data/flights/DLH414.js", "../../data/flights/UAL925.js", "../../data/flights/UAL1140.js", "../../data/flights/UAL933.js", "../../data/flights/UAL1133.js", "../../data/flights/UAL3872.js", "../../data/flights/UAL1669.js"], function (require, exports, EsriMap, MapView, Motion, TY7, DLH414, UAL925, UAL1140, UAL933, UAL1133, UAL3872, UAL1669) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var map = new EsriMap({
@@ -27,8 +27,10 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
         var times = Object.keys(FullData).map(function (r, i) { return new Date(FullData[r].features[0].properties.timespan.begin); });
         console.log(FullData);
         function iterateTime() {
+            // date = date.setMinutes(date.getMinutes() + 30);
             date.setSeconds(date.getSeconds() + 60);
             times.map(function (r, i) {
+                //console.log(r)
                 if (date > r) {
                     var blah = new Motion.MotionLayer({
                         title: "8_21",
@@ -37,7 +39,6 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
                         view: view,
                         speed: 4,
                         color: randomColor(),
-                        shadowBlur: true,
                     });
                     blah.addToMap();
                     times[i] = undefined;

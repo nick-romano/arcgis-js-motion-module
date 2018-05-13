@@ -36,6 +36,7 @@ sockjs_echo.on('connection', function (conn) {
 
 
 var publicDir = path.join(__dirname, 'app')
+var docDir = path.join(__dirname, 'docs')
 
 app.set('port', process.env.PORT || 3000)
 app.use(logger('dev'))
@@ -44,6 +45,11 @@ app.use(bodyParser.json()) // Parses json, multi-part (file), url-encoded
 app.use(express.static('app'));
 app.get('/', function (req, res) {
     res.sendFile(path.join(publicDir, 'index.html'))
+})
+
+app.use(express.static('docs'));
+app.get('/docs/', function (req, res) {
+    res.sendFile(path.join(docDir, 'index.html'))
 })
 
 var server = http.createServer(app)
