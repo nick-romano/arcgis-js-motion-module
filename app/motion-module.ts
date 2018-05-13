@@ -123,7 +123,6 @@ class MotionLayer extends declared(Layer) {
     }
 
     set LayerPoints(value: object) {
-        console.log(value.features);
         const geom = value.features.map((r: any) => r.geometry);
         const PointFeatures = geom.filter((r: any) => r.type === "Point" ? r : null);
         const MarkerSymbol = new SimpleMarkerSymbol({
@@ -219,6 +218,9 @@ class MotionLayer extends declared(Layer) {
         this.ctx.canvas.width = screen.width;
         this.ctx.canvas.height = screen.height;
         this.view.extent = layer.CustomExtent;
+        this.ctx.strokeStyle = this.color;
+        this.ctx.lineCap = "round";
+        this.ctx.fillStyle = 'rgb(255,255,255)';
         // this.view.zoom = this.view.zoom + 1;
         // bouncingBall(layer);
         // vertexes for line segment
@@ -258,11 +260,14 @@ class MotionLayer extends declared(Layer) {
 
     private _drawExistingState() {
         const existingState = [];
+        
+        // sort by timespan
         this.LayerLines.graphics.items.sort((a, b) => new Date(a.attributes.timespan.begin) - new Date(b.attributes.timespan.begin));
+        // cool effect commented out...
+        // for(let i = this.state.segment; i < this.state.segment + 1; i++) {
         for(let i = 0; i < this.state.segment; i++) {
             const tempArray = [];
             for(var j = 0; j < this.LayerLines.graphics.items[i].geometry.paths[0].length; j++) {
-
                 if(this.Categories !== undefined) {
                     const category = this.LayerLines.graphics.items[i].attributes[this.catField];
                     this.setColor(this.Categories[category]);
@@ -271,24 +276,27 @@ class MotionLayer extends declared(Layer) {
                 var point = this.view.toScreen(
                         new Point(this.LayerLines.graphics.items[i].geometry.paths[0][j])
                     )
+
+                    // set label based on category
                     // point.attribute = new Date(this.LayerLines.graphics.items[i].attributes.timespan.end).toGMTString();
-                    point.attribute = this.LayerLines.graphics.items[i].attributes.Category
+                    point.attribute = this.LayerLines.graphics.items[i].attributes.Category;
+                    this.Categories ? point.vectorColor = this.Categories[this.LayerLines.graphics.items[i].attributes[this.catField]] : undefined;
+
                 tempArray.push(
                     point
                 );
             }
-            typeof(tempArray[0]) === "object" ? existingState.push(tempArray) : undefined;
+            typeof(tempArray[0]) === "object" ? existingState = [tempArray] : undefined;
             this._draw(existingState);
         }
         // console.log(existingState)
         
     }
-
-    // draw just draw the line statically on the page
+    
     private _draw(g: any) {
+        
         this.ctx.beginPath();
         var g = simplify(g, 4);
-        // console.log(g)
         for (var i = 0; i < g.length; i ++) {
             this.ctx.moveTo(g[i][0].x, g[i][0].y);
             for (var j = 0; j < g[i].length; j++) {
@@ -301,6 +309,8 @@ class MotionLayer extends declared(Layer) {
         this.ctx.shadowColor = "rgba(0,0,0,1)";
         this.ctx.shadowBlur = 2;
         this.ctx.lineJoin = 'round';
+        // console.log(g)
+        this.Categories ? this.ctx.strokeStyle = g[0][0].vectorColor : undefined;
         // this.ctx.lineCap = 'round';
         //this.ctx.lineJoin = 'round';
         this.ctx.stroke();
@@ -374,11 +384,6 @@ class MotionLayer extends declared(Layer) {
                 clearTimeout(id);
             };
 
-
-            // window.cancelAnimationFrame();
-            // this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-            this.ctx.lineCap = "round";
-            this.ctx.fillStyle = 'rgb(255,255,255)';
 
             // variable to hold how many frames have elapsed in the animation
             var t = 1;
