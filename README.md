@@ -21,6 +21,23 @@ In Bertin’s Semiology of Graphics, he includes a section that he titles “GEO
 
 <h3>Implementation</h3>
 
+<h5>Data Requirements</h5>
+
+<h5>Properties</h5>
+
+|                         |         |          |            |                                                                                      | 
+|-------------------------|---------|----------|------------|--------------------------------------------------------------------------------------| 
+| Property                | Type    | Required | Default    | Description                                                                          | 
+| Source                  | Object  | Yes      | No default | This is the source for the data, currently only accepting geojson.                   | 
+| SourceType              | String  | No       | GEOJSON    | Specified by user to tell the module how to read the source parameter.               | 
+| View                    | Object  | Yes      | No Default | Current Map View object you need to insert the layer into                            | 
+| Speed                   | Int     | Yes      | 0          | Specifies speed of transition                                                        | 
+| Color                   | Object  | Yes      | No default | Will accept a dojo.color object to set color.                                        | 
+| shadowBlur              | boolean | No       | FALSE      | adds shadow to line features, just cartographic preference                           | 
+| labelField              | String  | No       | No default | Specify a label field to label start vertexes of each line segment, not required     | 
+| catField (Experimental) | String  | No       | No default | Experimental. Sets colors based on specified field, basically a categorical renderer | 
+
+
 - Coming soon.
 
 <h3>Inspiration</h3>
