@@ -136,11 +136,11 @@ class MotionLayer extends declared(Layer) {
         return geom
     }
 
-    get LayerPoints(): object {
+    get LayerPoints() {
         return this._LayerPoints;
     }
 
-    set LayerPoints(value: object) {
+    set LayerPoints(value: source) {
         const geom = value.features.map((r: any) => r.geometry);
         const PointFeatures = geom.filter((r: any) => r.type === "Point" ? r : null);
         const MarkerSymbol = new SimpleMarkerSymbol({
@@ -160,7 +160,7 @@ class MotionLayer extends declared(Layer) {
         this._LayerPoints = PointFeatures;
     }
 
-    get Categories(): Array {
+    get Categories() {
         return this._categories;
     }
 
@@ -229,11 +229,7 @@ class MotionLayer extends declared(Layer) {
         var PIXEL_RATIO = (function () {
             var ctx = document.createElement("canvas").getContext("2d"),
                 dpr = window.devicePixelRatio || 1,
-                bsr = ctx.webkitBackingStorePixelRatio ||
-                      ctx.mozBackingStorePixelRatio ||
-                      ctx.msBackingStorePixelRatio ||
-                      ctx.oBackingStorePixelRatio ||
-                      ctx.backingStorePixelRatio || 1;
+                bsr = 1;
         
             return dpr / bsr;
         })();
