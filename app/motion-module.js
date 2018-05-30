@@ -52,6 +52,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbol", "esri/symbols/SimpleMarkerSymbol", "esri/layers/GraphicsLayer", "esri/Graphic", "esri/geometry/Extent", "esri/geometry", "esri/core/accessorSupport/decorators"], function (require, exports, Layer, SimpleLineSymbol, SimpleMarkerSymbol, GraphicsLayer, Graphic, Extent, geometry_1, decorators_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    var geoJSONFeature = /** @class */ (function () {
+        function geoJSONFeature() {
+        }
+        __decorate([
+            decorators_1.property()
+        ], geoJSONFeature.prototype, "geometry", void 0);
+        return geoJSONFeature;
+    }());
     var MotionLayer = /** @class */ (function (_super) {
         __extends(MotionLayer, _super);
         function MotionLayer(args) {
@@ -69,10 +77,10 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             _this.lineWidth = args["width"] ? args["width"] : 2;
             _this.shadowBlur = args["shadowBlur"];
             _this.labelField = args["labelField"];
-            //for dev
+            // //for dev
             window.layer = _this;
-            window.view = args["view"];
             return _this;
+            // window.view = args["view"];
         }
         Object.defineProperty(MotionLayer.prototype, "LayerLines", {
             get: function () {
@@ -89,9 +97,10 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                             width: 4
                         });
                         var geom = this.source.features.map(function (r) {
-                            var obj = {};
-                            obj.geometry = r.geometry;
-                            obj.properties = r.properties;
+                            var obj = {
+                                geometry: r.geometry,
+                                properties: r.properties
+                            };
                             return obj;
                         });
                         var LineFeatures = geom.filter(function (r) { return r.geometry.type === "LineString" ? r : null; });
@@ -113,12 +122,16 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                         this._LayerLines = new GraphicsLayer({
                             graphics: LineFeatures.map(function (r) { return r.clone(); })
                         });
-                        var len = this._LayerLines.graphics.items.length;
+                        var len = this._LayerLines.graphics.length;
                         // set extent for map; 
-                        var xmax = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.xmax - b.geometry.extent.xmax; })[0].geometry.extent.xmax * .992;
-                        var xmin = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.xmin - b.geometry.extent.xmin; })[len - 1].geometry.extent.xmin * 1.002;
-                        var ymax = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.ymax - b.geometry.extent.ymax; })[0].geometry.extent.ymax * .998;
-                        var ymin = this._LayerLines.graphics.items.sort(function (a, b) { return a.geometry.extent.ymin - b.geometry.extent.ymin; })[len - 1].geometry.extent.ymin * 1.002;
+                        this._LayerLines.graphics.sort(function (a, b) { return a.geometry.extent.xmax - b.geometry.extent.xmax; });
+                        var xmax = this._LayerLines.graphics.getItemAt(0).geometry.extent.xmax * .992;
+                        this._LayerLines.graphics.sort(function (a, b) { return a.geometry.extent.xmin - b.geometry.extent.xmin; });
+                        var xmin = this._LayerLines.graphics.getItemAt(len - 1).geometry.extent.xmin * 1.002;
+                        this._LayerLines.graphics.sort(function (a, b) { return a.geometry.extent.ymax - b.geometry.extent.ymax; });
+                        var ymax = this._LayerLines.graphics.getItemAt(0).geometry.extent.ymax * .998;
+                        this._LayerLines.graphics.sort(function (a, b) { return a.geometry.extent.ymin - b.geometry.extent.ymin; });
+                        var ymin = this._LayerLines.graphics.getItemAt(len - 1).geometry.extent.ymin * 1.002;
                         this.CustomExtent = new Extent({ xmax: xmax, xmin: xmin, ymax: ymax, ymin: ymin });
                         /// this._LayerLines.fullExtent.width = 100000;
                     }
@@ -133,7 +146,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         Object.defineProperty(MotionLayer.prototype, "features", {
             get: function () {
                 var geom = this.source.features.map(function (r) {
-                    var obj = {};
+                    var obj = new geoJSONFeature();
                     obj.geometry = r.geometry;
                     obj.properties = r.properties;
                     return obj;

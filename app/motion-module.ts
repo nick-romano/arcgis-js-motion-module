@@ -9,26 +9,36 @@ import MapView = require("esri/views/MapView")
 import { Point, Polygon, Polyline } from "esri/geometry";
 import { subclass, property, declared } from "esri/core/accessorSupport/decorators";
 import watchUtils = require("esri/core/watchUtils");
-import { RGBColor } from "../node_modules/@types/d3/index";
-import { GeoJsonObject } from "../node_modules/@types/geojson/index";
+import Collection = require("esri/core/Collection");
+
+interface source {
+    features: Array<object>
+}
+
+class geoJSONFeature {
+    @property()
+    geometry: {};
+    properties: {};
+}
 
 @subclass("esri/layers/MotionLayer")
 class MotionLayer extends declared(Layer) {
     @property()
-    source: Object;
+    source: {features: Array<object>};
     sourceType: String;
-    _LayerLines: Layer;
-    _LayerPoints: Layer;
+    _LayerLines: GraphicsLayer;
+    _LayerPoints: GraphicsLayer;
     view: MapView;
     mapView: MapView;
     ctx: CanvasRenderingContext2D;
     CustomExtent: Extent;
     speed: number;
-    color: RGBColor;
+    color: string;
     lineWidth: number;
     state: {segment: number, vertex: number};
     catField: string;
     labelField: string;
+    shadowBlur: boolean;
 
 
 
@@ -48,9 +58,9 @@ class MotionLayer extends declared(Layer) {
         this.shadowBlur = args["shadowBlur"];
         this.labelField = args["labelField"];
 
-        //for dev
+        // //for dev
         window.layer = this;
-        window.view = args["view"];
+        // window.view = args["view"];
     }
 
     get LayerLines(): object {
@@ -69,14 +79,15 @@ class MotionLayer extends declared(Layer) {
                 });
 
                 const geom = this.source.features.map((r: any) => {
-                    let obj = {};
-                    obj.geometry = r.geometry;
-                    obj.properties = r.properties;
+                    let obj: {geometry: object, properties: Array<object>} = {
+                        geometry : r.geometry,
+                        properties : r.properties
+                    }
                     return obj;
                 });
-                const LineFeatures = geom.filter((r: any) => r.geometry.type === "LineString" ? r : null);
+                let LineFeatures: any = geom.filter((r: any) => r.geometry.type === "LineString" ? r : null);
                 LineFeatures = LineFeatures.map((r: any) => {
-                    var graphic = new Graphic;
+                    var graphic: Graphic = new Graphic;
                     graphic.geometry = new Polyline();
                     graphic.attributes = r.properties;
                     // to update with param field
@@ -94,12 +105,16 @@ class MotionLayer extends declared(Layer) {
                 this._LayerLines = new GraphicsLayer({
                     graphics: LineFeatures.map((r: any) => r.clone())
                 })
-                const len = this._LayerLines.graphics.items.length
+                const len = this._LayerLines.graphics.length
                 // set extent for map; 
-                const xmax = this._LayerLines.graphics.items.sort((a: Graphic, b: Graphic) => a.geometry.extent.xmax - b.geometry.extent.xmax)[0].geometry.extent.xmax * .992;
-                const xmin = this._LayerLines.graphics.items.sort((a: Graphic, b: Graphic) => a.geometry.extent.xmin - b.geometry.extent.xmin)[len - 1].geometry.extent.xmin * 1.002;
-                const ymax = this._LayerLines.graphics.items.sort((a: Graphic, b: Graphic) => a.geometry.extent.ymax - b.geometry.extent.ymax)[0].geometry.extent.ymax * .998;
-                const ymin = this._LayerLines.graphics.items.sort((a: Graphic, b: Graphic) => a.geometry.extent.ymin - b.geometry.extent.ymin)[len - 1].geometry.extent.ymin * 1.002;
+                this._LayerLines.graphics.sort((a: Graphic, b: Graphic) => a.geometry.extent.xmax - b.geometry.extent.xmax);
+                const xmax = this._LayerLines.graphics.getItemAt(0).geometry.extent.xmax * .992;
+                this._LayerLines.graphics.sort((a: Graphic, b: Graphic) => a.geometry.extent.xmin - b.geometry.extent.xmin)
+                const xmin = this._LayerLines.graphics.getItemAt(len - 1).geometry.extent.xmin * 1.002;
+                this._LayerLines.graphics.sort((a: Graphic, b: Graphic) => a.geometry.extent.ymax - b.geometry.extent.ymax)
+                const ymax = this._LayerLines.graphics.getItemAt(0).geometry.extent.ymax * .998;
+                this._LayerLines.graphics.sort((a: Graphic, b: Graphic) => a.geometry.extent.ymin - b.geometry.extent.ymin)
+                const ymin = this._LayerLines.graphics.getItemAt(len - 1).geometry.extent.ymin * 1.002;
 
                 this.CustomExtent = new Extent({ xmax, xmin, ymax, ymin })
                 /// this._LayerLines.fullExtent.width = 100000;
@@ -112,7 +127,7 @@ class MotionLayer extends declared(Layer) {
 
     get features(): object {
         var geom = this.source.features.map((r: any) => {
-            let obj = {};
+            let obj: geoJSONFeature = new geoJSONFeature();
             obj.geometry = r.geometry;
             obj.properties = r.properties;
             return obj;
@@ -567,7 +582,7 @@ class MotionLayer extends declared(Layer) {
         return simplified;
     }
 
-    private getSqDist(p1, p2) {
+    private getSqDist(p1: Point, p2: Point) {
         /*
         (c) 2017, Vladimir Agafonkin
         Simplify.js, a high-performance JS polyline simplification library
@@ -581,7 +596,7 @@ class MotionLayer extends declared(Layer) {
     }
     
     // square distance from a point to a segment
-    private getSqSegDist(p, p1, p2) {
+    private getSqSegDist(p: Point, p1: Point, p2: Point) {
         /*
         (c) 2017, Vladimir Agafonkin
         Simplify.js, a high-performance JS polyline simplification library
