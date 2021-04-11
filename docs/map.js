@@ -22,6 +22,7 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
             color: '#ffc107',
             labelField: "Category",
             shadowBlur: true,
+            // catField: 'Category',
         });
         layer.addToMap();
         var layer2 = new Motion.MotionLayer({
@@ -33,6 +34,7 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
             color: '#8BC34A',
             labelField: "Category",
             shadowBlur: true,
+            // catField: 'Category',
         });
         layer2.addToMap();
         var layer3 = new Motion.MotionLayer({
@@ -44,6 +46,7 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module
             color: '#2196f3',
             labelField: "Category",
             shadowBlur: true,
+            // catField: 'Category',
         });
         layer3.addToMap();
         layer3.zoomTo();

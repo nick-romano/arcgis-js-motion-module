@@ -35,7 +35,7 @@ class MotionLayer extends declared(Layer) {
     speed: number;
     color: string;
     lineWidth: number;
-    state: {segment: number, vertex: number};
+    state: { segment: number, vertex: number };
     catField: string;
     labelField: string;
     shadowBlur: boolean;
@@ -51,6 +51,7 @@ class MotionLayer extends declared(Layer) {
         this.color = args["color"] ? args["color"] : 'black';
         this.sourceType = args["sourceType"];
         this.LayerLines = args["source"];
+        debugger;
         this.LayerPoints = args["source"];
         this.Categories = args["catField"] ? args["catField"] : undefined;
         this.state = {segment:0, vertex: 0};

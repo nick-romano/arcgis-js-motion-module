@@ -1,6 +1,7 @@
 define(["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.UAL1140 = void 0;
     var UAL1140 = {
         "type": "FeatureCollection",
         "features": [

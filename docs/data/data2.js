@@ -1,6 +1,7 @@
 define(["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.data2 = void 0;
     var data2 = {
         "type": "FeatureCollection",
         "features": [

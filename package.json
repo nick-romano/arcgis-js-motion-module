@@ -17,17 +17,18 @@
   },
   "homepage": "https://github.com/nick-romano/arcgis-js-motion-module#readme",
   "devDependencies": {
-    "@types/d3": "^5.0.0",
-    "dojo-typings": "^1.11.9",
-    "express": "^4.16.3",
-    "morgan": "^1.9.0",
+    "@types/d3": "^6.3.0",
+    "dojo-typings": "^1.11.11",
+    "express": "^4.17.1",
+    "morgan": "^1.10.0",
     "reload": "^2.2.2",
-    "tslint": "^5.9.1",
-    "watch": "^1.0.2"
+    "tslint": "^6.1.3"
   },
   "dependencies": {
     "@types/arcgis-js-api": "^4.7.0",
-    "d3": "^4.13.0",
-    "sockjs": "^0.3.19"
+    "chokidar": "^3.5.1",
+    "d3": "^6.6.2",
+    "sockjs": "^0.3.21",
+    "typescript": "^4.2.4"
   }
 }

@@ -39,6 +39,7 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./../../motion-
                         view: view,
                         speed: 4,
                         color: randomColor(),
+                        // catField: 'Category',
                     });
                     blah.addToMap();
                     times[i] = undefined;
