@@ -58,7 +58,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbol", "esri/symbols/SimpleMarkerSymbol", "esri/layers/GraphicsLayer", "esri/Graphic", "esri/geometry/Extent", "esri/geometry", "esri/core/accessorSupport/decorators"], function (require, exports, Layer, SimpleLineSymbol, SimpleMarkerSymbol, GraphicsLayer, Graphic, Extent, geometry_1, decorators_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.MotionLayer = void 0;
+    exports.MotionLayer = exports.ESourceType = void 0;
+    var ESourceType;
+    (function (ESourceType) {
+        ESourceType["GEOJSON"] = "GEOJSON";
+    })(ESourceType = exports.ESourceType || (exports.ESourceType = {}));
     var geoJSONFeature = /** @class */ (function () {
         function geoJSONFeature() {
         }
@@ -71,86 +75,77 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         __extends(MotionLayer, _super);
         function MotionLayer(args) {
             var _this = _super.call(this) || this;
-            _this.source = args["source"] ? args["source"] : console.error('Source data is required');
+            _this.source = args["source"];
             _this.catField = args["catField"] ? args["catField"] : undefined;
-            _this.view = args["view"] ? args["view"] : console.error('please pass your view as parameter');
+            console.log(args.view);
+            _this.view = args["view"];
+            _this.mapView = _this.view;
             _this.speed = args["speed"] ? args["speed"] : 1;
             _this.color = args["color"] ? args["color"] : 'black';
             _this.sourceType = args["sourceType"];
-            _this.LayerLines = args["source"];
-            debugger;
-            _this.LayerPoints = args["source"];
-            _this.Categories = args["catField"] ? args["catField"] : undefined;
+            _this.LayerLines = _this.createLayerLines();
+            _this.LayerPoints = _this.createLayerPoints();
+            _this.categories = _this.createCategories();
             _this.state = { segment: 0, vertex: 0 };
             _this.lineWidth = args["width"] ? args["width"] : 2;
-            _this.shadowBlur = args["shadowBlur"];
+            _this.shadowBlur = args["shadowBlur"] ? args["shadowBlur"] : false;
             _this.labelField = args["labelField"];
-            // //for dev
-            window.layer = _this;
+            _this.ctx = _this._createCTX();
+            _this.anFrame = 0;
             return _this;
+            // //for dev
+            // window.layer = this;
             // window.view = args["view"];
         }
-        Object.defineProperty(MotionLayer.prototype, "LayerLines", {
-            get: function () {
-                return this._LayerLines;
-            },
-            set: function (value) {
-                if (this.sourceType !== "GEOJSON" && this.sourceType !== "FeatureLayer") {
-                    console.error("sourceType is not valid");
-                }
-                else if (this.sourceType === "GEOJSON") {
-                    try {
-                        var lineSymbol_1 = new SimpleLineSymbol({
-                            color: [255, 255, 255],
-                            width: 4
-                        });
-                        var geom = this.source.features.map(function (r) {
-                            var obj = {
-                                geometry: r.geometry,
-                                properties: r.properties
-                            };
-                            return obj;
-                        });
-                        var LineFeatures = geom.filter(function (r) { return r.geometry.type === "LineString" ? r : null; });
-                        LineFeatures = LineFeatures.map(function (r) {
-                            var graphic = new Graphic;
-                            graphic.geometry = new geometry_1.Polyline();
-                            graphic.attributes = r.properties;
-                            // to update with param field
-                            var timeDiff = (new Date(r.properties["timespan"].end).valueOf() - new Date(r.properties["timespan"].begin).valueOf()) * .001;
-                            graphic.attributes.timeDiff = timeDiff;
-                            graphic.attributes.velocity = (r.properties.Distance * 1) / timeDiff;
-                            graphic.geometry.paths[0] = [];
-                            var arr = [];
-                            r.geometry.coordinates.map(function (t) { return arr.push([t[0], t[1]]); });
-                            graphic.geometry.paths[0] = arr;
-                            graphic.symbol = lineSymbol_1;
-                            return graphic;
-                        });
-                        this._LayerLines = new GraphicsLayer({
-                            graphics: LineFeatures.map(function (r) { return r.clone(); })
-                        });
-                        var len = this._LayerLines.graphics.length;
-                        // set extent for map; 
-                        this._LayerLines.graphics.sort(function (a, b) { return a.geometry.extent.xmax - b.geometry.extent.xmax; });
-                        var xmax = this._LayerLines.graphics.getItemAt(0).geometry.extent.xmax * .992;
-                        this._LayerLines.graphics.sort(function (a, b) { return a.geometry.extent.xmin - b.geometry.extent.xmin; });
-                        var xmin = this._LayerLines.graphics.getItemAt(len - 1).geometry.extent.xmin * 1.002;
-                        this._LayerLines.graphics.sort(function (a, b) { return a.geometry.extent.ymax - b.geometry.extent.ymax; });
-                        var ymax = this._LayerLines.graphics.getItemAt(0).geometry.extent.ymax * .998;
-                        this._LayerLines.graphics.sort(function (a, b) { return a.geometry.extent.ymin - b.geometry.extent.ymin; });
-                        var ymin = this._LayerLines.graphics.getItemAt(len - 1).geometry.extent.ymin * 1.002;
-                        this.CustomExtent = new Extent({ xmax: xmax, xmin: xmin, ymax: ymax, ymin: ymin });
-                        /// this._LayerLines.fullExtent.width = 100000;
-                    }
-                    catch (e) {
-                        console.error(e);
-                    }
-                }
-            },
-            enumerable: false,
-            configurable: true
-        });
+        MotionLayer.prototype.createLayerLines = function () {
+            if (this.sourceType === ESourceType.GEOJSON) {
+                var lineSymbol_1 = new SimpleLineSymbol({
+                    color: [255, 255, 255],
+                    width: 4
+                });
+                var geom = this.source.features.map(function (r) {
+                    var obj = {
+                        geometry: r.geometry,
+                        properties: r.properties
+                    };
+                    return obj;
+                });
+                var LineFeatures = geom.filter(function (r) { return r.geometry.type === "LineString" ? r : null; });
+                LineFeatures = LineFeatures.map(function (r) {
+                    var graphic = new Graphic;
+                    // graphic.geometry = new Polyline();
+                    graphic.attributes = r.properties;
+                    // to update with param field
+                    var timeDiff = (new Date(r.properties["timespan"].end).valueOf() - new Date(r.properties["timespan"].begin).valueOf()) * .001;
+                    graphic.attributes.timeDiff = timeDiff;
+                    graphic.attributes.velocity = (r.properties.Distance * 1) / timeDiff;
+                    var pline = new geometry_1.Polyline();
+                    pline.paths[0] = [];
+                    var arr = [];
+                    r.geometry.coordinates.forEach(function (t) { return arr.push([t[0], t[1]]); });
+                    pline.paths[0] = arr;
+                    graphic.geometry = pline;
+                    graphic.symbol = lineSymbol_1;
+                    return graphic;
+                });
+                var _LayerLines = new GraphicsLayer({
+                    graphics: LineFeatures.map(function (r) { return r.clone(); })
+                });
+                var len = _LayerLines.graphics.length;
+                // set extent for map; 
+                _LayerLines.graphics.sort(function (a, b) { return a.geometry.extent.xmax - b.geometry.extent.xmax; });
+                var xmax = _LayerLines.graphics.getItemAt(0).geometry.extent.xmax * .992;
+                _LayerLines.graphics.sort(function (a, b) { return a.geometry.extent.xmin - b.geometry.extent.xmin; });
+                var xmin = _LayerLines.graphics.getItemAt(len - 1).geometry.extent.xmin * 1.002;
+                _LayerLines.graphics.sort(function (a, b) { return a.geometry.extent.ymax - b.geometry.extent.ymax; });
+                var ymax = _LayerLines.graphics.getItemAt(0).geometry.extent.ymax * .998;
+                _LayerLines.graphics.sort(function (a, b) { return a.geometry.extent.ymin - b.geometry.extent.ymin; });
+                var ymin = _LayerLines.graphics.getItemAt(len - 1).geometry.extent.ymin * 1.002;
+                this.CustomExtent = new Extent({ xmax: xmax, xmin: xmin, ymax: ymax, ymin: ymin });
+                /// this._LayerLines.fullExtent.width = 100000;
+                return _LayerLines;
+            }
+        };
         Object.defineProperty(MotionLayer.prototype, "features", {
             get: function () {
                 var geom = this.source.features.map(function (r) {
@@ -164,67 +159,60 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             enumerable: false,
             configurable: true
         });
-        Object.defineProperty(MotionLayer.prototype, "LayerPoints", {
-            get: function () {
-                return this._LayerPoints;
-            },
-            set: function (value) {
-                var geom = value.features.map(function (r) { return r.geometry; });
+        MotionLayer.prototype.createLayerPoints = function () {
+            if (this.sourceType === ESourceType.GEOJSON) {
+                var geom = this.source.features.map(function (r) { return r.geometry; });
                 var PointFeatures = geom.filter(function (r) { return r.type === "Point" ? r : null; });
-                var MarkerSymbol = new SimpleMarkerSymbol({
+                var MarkerSymbol_1 = new SimpleMarkerSymbol({
                     color: "black",
                     size: 16,
                 });
-                PointFeatures.Points = new Array;
                 PointFeatures.map(function (r) {
                     r.geometry = new geometry_1.Point(r.coordinates),
                         r.type = "Point",
                         // ! set up polyfill for attributes
-                        r.attributes = { 'blah': 'blah' },
-                        r.symbol = MarkerSymbol,
+                        r.attributes = {},
+                        r.symbol = MarkerSymbol_1,
                         r.graphic = new Graphic({ geometry: r.geometry, attributes: r.attributes, symbol: r.symbol });
                 });
-                this._LayerPoints = PointFeatures;
-            },
-            enumerable: false,
-            configurable: true
-        });
-        Object.defineProperty(MotionLayer.prototype, "Categories", {
-            get: function () {
-                return this._categories;
-            },
-            set: function (Field) {
-                var _this = this;
-                var allValues = this.LayerLines.graphics.items.map(function (r) { return r.attributes[Field]; });
+                return PointFeatures;
+            }
+        };
+        MotionLayer.prototype.createCategories = function () {
+            var _this = this;
+            var categories = {};
+            if (this.catField) {
+                var allValues = this.LayerLines.graphics.map(function (r) { return r.attributes[_this.catField]; });
                 // console.log(allValues)
                 var catFields = allValues.filter(function (v, i, a) { return a.indexOf(v) === i; });
-                var catColorArray = {};
-                function getColor() {
+                var catColorArray_1 = {};
+                var getColor = function () {
                     for (var i = 0; i < 100; i++) {
-                        var color = this.randomColor();
-                        if (!Object.values(this.Categories).includes(color)) {
+                        var color = _this.randomColor();
+                        if (!(color in categories)) {
                             return color;
                         }
                         else {
-                            // do nothing
+                            return 'black';
                         }
+                        ;
                     }
-                    return color;
-                }
-                catFields.map(function (r) {
+                    ;
+                };
+                catFields.forEach(function (r) {
                     // const FinalColor = getColor();
-                    catColorArray[r] = _this.randomColor();
+                    catColorArray_1[r] = _this.randomColor();
                 });
                 if (this.catField !== undefined) {
-                    this._categories = catColorArray;
+                    return catColorArray_1;
                 }
-            },
-            enumerable: false,
-            configurable: true
-        });
+                else {
+                    return undefined;
+                }
+            }
+        };
         MotionLayer.prototype._initView = function (view) {
             try {
-                this.mapView = view;
                 this._initCustomGraphics(this);
                 this._initListeners();
             }
@@ -244,36 +232,46 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 _this._recordChange(e);
             });
         };
+        MotionLayer.prototype._calcPixelRatio = function () {
+            var PIXEL_RATIO = (function () {
+                var ctx = document.createElement("canvas").getContext("2d"), dpr = window.devicePixelRatio || 1, bsr = 1;
+                return dpr / bsr;
+            })();
+            return PIXEL_RATIO;
+        };
+        MotionLayer.prototype._createCTX = function () {
+            var PIXEL_RATIO = this._calcPixelRatio();
+            var proto = this._createHiDPICanvas(screen.width, screen.height, PIXEL_RATIO);
+            proto.id = this.title;
+            var rootDiv = document.querySelector('g');
+            var ctx = proto.getContext("2d");
+            return ctx;
+        };
         MotionLayer.prototype._recordChange = function (e) {
             cancelAnimationFrame(this.anFrame);
             this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
             this._paint();
         };
+        MotionLayer.prototype._createHiDPICanvas = function (w, h, ratio) {
+            var PIXEL_RATIO = this._calcPixelRatio();
+            if (!ratio) {
+                ratio = PIXEL_RATIO;
+            }
+            var can = document.createElement("canvas");
+            can.width = w * ratio;
+            can.height = h * ratio;
+            can.style.width = w + "px";
+            can.style.height = h + "px";
+            can.getContext("2d").setTransform(ratio, 0, 0, ratio, 0, 0);
+            return can;
+        };
+        ;
         MotionLayer.prototype._initCustomGraphics = function (layer) {
-            var PIXEL_RATIO = (function () {
-                var ctx = document.createElement("canvas").getContext("2d"), dpr = window.devicePixelRatio || 1, bsr = 1;
-                return dpr / bsr;
-            })();
-            var createHiDPICanvas = function (w, h, ratio) {
-                if (!ratio) {
-                    ratio = PIXEL_RATIO;
-                }
-                var can = document.createElement("canvas");
-                can.width = w * ratio;
-                can.height = h * ratio;
-                can.style.width = w + "px";
-                can.style.height = h + "px";
-                can.getContext("2d").setTransform(ratio, 0, 0, ratio, 0, 0);
-                return can;
-            };
-            var initCanvas = document.querySelector('.esri-display-object');
-            var proto = createHiDPICanvas(screen.width, screen.height, PIXEL_RATIO);
-            proto.id = this.title;
-            var rootDiv = document.querySelector('g');
-            this.ctx = proto.getContext("2d");
+            var view = this.mapView;
+            var initCanvas = view.surface;
             this.ctx.canvas.style.position = 'absolute';
             this.ctx.canvas.style.zIndex = '0';
-            initCanvas.insertAdjacentElement('afterend', this.ctx.canvas);
+            initCanvas.prepend(this.ctx.canvas);
             this.ctx.canvas.width = screen.width;
             this.ctx.canvas.height = screen.height;
             this.ctx.strokeStyle = this.color;
@@ -290,65 +288,75 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         };
         MotionLayer.prototype._paint = function () {
             this._drawExistingState();
-            this.LayerLines.graphics.items.sort(function (a, b) { return new Date(a.attributes.timespan.begin) - new Date(b.attributes.timespan.begin); });
-            function asyncFunc() {
-                return __awaiter(this, void 0, void 0, function () {
-                    var i, category;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                i = 0;
-                                _a.label = 1;
-                            case 1:
-                                if (!(i < this.LayerLines.graphics.items.length)) return [3 /*break*/, 4];
-                                if (!(i > this.state.segment - 1)) return [3 /*break*/, 3];
-                                if (this.Categories !== undefined) {
-                                    category = this.LayerLines.graphics.items[i].attributes[this.catField];
-                                    this.setColor(this.Categories[category]);
-                                }
-                                if (this.LayerLines.graphics.items[i].attributes.velocity) {
-                                    this.setSpeed(this.LayerLines.graphics.items[i].attributes.velocity * .5);
-                                }
-                                ;
-                                return [4 /*yield*/, this._addVertexes(this.LayerLines.graphics.items[i].geometry.paths[0], undefined, undefined)];
-                            case 2:
-                                _a.sent();
-                                this.state.segment += 1;
-                                //console.log('segment +1');
-                                this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-                                this._drawExistingState();
-                                _a.label = 3;
-                            case 3:
-                                i++;
-                                return [3 /*break*/, 1];
-                            case 4: return [2 /*return*/];
-                        }
-                    });
+            this.LayerLines.graphics.sort(function (a, b) { return new Date(a.attributes.timespan.begin).valueOf() - new Date(b.attributes.timespan.begin).valueOf(); });
+            this.loopSegments();
+        };
+        MotionLayer.prototype.loopSegments = function () {
+            return __awaiter(this, void 0, void 0, function () {
+                var i, category, geom;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            i = 0;
+                            _a.label = 1;
+                        case 1:
+                            if (!(i < this.LayerLines.graphics.length)) return [3 /*break*/, 4];
+                            if (!(i > this.state.segment - 1)) return [3 /*break*/, 3];
+                            if (this.categories !== undefined && this.catField) {
+                                category = this.LayerLines.graphics.getItemAt(i).attributes[this.catField];
+                                this.setColor(this.categories[category]);
+                            }
+                            if (this.LayerLines.graphics.getItemAt(i).attributes.velocity) {
+                                this.setSpeed(this.LayerLines.graphics.getItemAt(i).attributes.velocity * .5);
+                            }
+                            ;
+                            geom = this.LayerLines.graphics.getItemAt(i).geometry;
+                            return [4 /*yield*/, this._addVertexes(geom.paths[0], undefined, undefined)];
+                        case 2:
+                            _a.sent();
+                            this.state.segment += 1;
+                            //console.log('segment +1');
+                            this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+                            this._drawExistingState();
+                            _a.label = 3;
+                        case 3:
+                            i++;
+                            return [3 /*break*/, 1];
+                        case 4: return [2 /*return*/];
+                    }
                 });
-            }
-            var loopSegments = asyncFunc.bind(this);
-            loopSegments().then(function (r) { });
+            });
         };
         MotionLayer.prototype._drawExistingState = function () {
             var existingState = [];
             // sort by timespan
-            this.LayerLines.graphics.items.sort(function (a, b) { return new Date(a.attributes.timespan.begin) - new Date(b.attributes.timespan.begin); });
+            this.LayerLines.graphics.sort(function (a, b) { return new Date(a.attributes.timespan.begin).valueOf() - new Date(b.attributes.timespan.begin).valueOf(); });
             // cool effect commented out...
             // for(let i = this.state.segment; i < this.state.segment + 1; i++) {
             for (var i = 0; i < this.state.segment; i++) {
                 var tempArray = [];
-                for (var j = 0; j < this.LayerLines.graphics.items[i].geometry.paths[0].length; j++) {
-                    if (this.Categories !== undefined) {
-                        var category = this.LayerLines.graphics.items[i].attributes[this.catField];
-                        this.setColor(this.Categories[category]);
+                var graphic = this.LayerLines.graphics.getItemAt(i);
+                var geom = graphic.geometry;
+                for (var j = 0; j < geom.paths[0].length; j++) {
+                    if (this.categories !== undefined && this.catField) {
+                        var category = this.LayerLines.graphics.getItemAt(i).attributes[this.catField];
+                        this.setColor(this.categories[category]);
                     }
-                    var point = this.view.toScreen(new geometry_1.Point(this.LayerLines.graphics.items[i].geometry.paths[0][j]));
+                    var point = this.view.toScreen(new geometry_1.Point({ x: geom.paths[0][j][0], y: geom.paths[0][j][1] }));
                     // set label based on category
-                    this.labelField ? point.attribute = this.LayerLines.graphics.items[i].attributes[this.labelField] : undefined;
-                    this.Categories ? point.vectorColor = this.Categories[this.LayerLines.graphics.items[i].attributes[this.catField]] : undefined;
+                    if (this.labelField) {
+                        point.attribute = this.LayerLines.graphics.getItemAt(i).attributes[this.labelField];
+                    }
+                    ;
+                    if (this.categories && this.catField) {
+                        point.vectorColor = this.categories[this.LayerLines.graphics.getItemAt(i).attributes[this.catField]];
+                    }
+                    ;
                     tempArray.push(point);
                 }
-                typeof (tempArray[0]) === "object" ? existingState = [tempArray] : undefined;
+                if (typeof (tempArray[0]) === "object") {
+                    existingState = [tempArray];
+                }
                 this._draw(existingState);
             }
             // console.log(existingState)
@@ -371,7 +379,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 }
             }
             // console.log(g)
-            this.Categories ? this.ctx.strokeStyle = g[0][0].vectorColor : undefined;
+            this.categories ? this.ctx.strokeStyle = g[0][0].vectorColor : undefined;
             // this.ctx.lineCap = 'round';
             //this.ctx.lineJoin = 'round';
             this.ctx.shadowBlur = 0;
@@ -398,50 +406,35 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 _this._animate(g).then(function (r) { return resolve(r); });
             });
         };
-        MotionLayer.prototype._animate = function (g) {
-            var _this = this;
-            // calc waypoints traveling along vertices
-            var calcWaypoints = function (vertices) {
-                var waypoints = [];
-                // vertices = simplify(vertices, 4, true);
-                for (var i = 1; i < vertices.length; i++) {
-                    var pt0 = vertices[i - 1];
-                    var pt1 = vertices[i];
-                    var dx = pt1.x - pt0.x;
-                    var dy = pt1.y - pt0.y;
-                    // review this use of distance, but seems to smooth out transistion, 
-                    // previously distance was replaced with the value 100
-                    var distance = Math.sqrt(Math.pow(pt1.x - pt0.x, 2) + Math.pow(pt1.y - pt0.y, 2));
-                    for (var j = 0; j < (distance / this.speed); j++) {
-                        var x = pt0.x + dx * j / (distance / this.speed);
-                        var y = pt0.y + dy * j / (distance / this.speed);
-                        waypoints.push({
-                            x: x,
-                            y: y
-                        });
-                    }
+        MotionLayer.prototype.calcWaypoints = function (vertices) {
+            var waypoints = [];
+            // vertices = simplify(vertices, 4, true);
+            for (var i = 1; i < vertices.length; i++) {
+                var pt0 = vertices[i - 1];
+                var pt1 = vertices[i];
+                var dx = pt1.x - pt0.x;
+                var dy = pt1.y - pt0.y;
+                // review this use of distance, but seems to smooth out transistion, 
+                // previously distance was replaced with the value 100
+                var distance = Math.sqrt(Math.pow(pt1.x - pt0.x, 2) + Math.pow(pt1.y - pt0.y, 2));
+                for (var j = 0; j < (distance / this.speed); j++) {
+                    var x = pt0.x + dx * j / (distance / this.speed);
+                    var y = pt0.y + dy * j / (distance / this.speed);
+                    waypoints.push({
+                        x: x,
+                        y: y
+                    });
                 }
-                return (waypoints);
-            };
-            calcWaypoints = calcWaypoints.bind(this);
+            }
+            return (waypoints);
+        };
+        ;
+        MotionLayer.prototype._animate = function (g) {
+            // calc waypoints traveling along vertices
+            var _this = this;
             return new Promise(function (resolve, reject) {
                 var anFrame;
                 var lastTime = 0;
-                var vendors = ['ms', 'moz', 'webkit', 'o'];
-                for (var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-                    window.requestAnimationFrame = window[vendors[x] + 'RequestAnimationFrame'];
-                    window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame'] || window[vendors[x] + 'CancelRequestAnimationFrame'];
-                }
-                if (!window.requestAnimationFrame)
-                    window.requestAnimationFrame = function (callback, element) {
-                        var currTime = new Date().getTime();
-                        var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-                        var id = window.setTimeout(function () {
-                            callback(currTime + timeToCall);
-                        }, timeToCall);
-                        lastTime = currTime + timeToCall;
-                        return id;
-                    };
                 if (!window.cancelAnimationFrame)
                     window.cancelAnimationFrame = function (id) {
                         clearTimeout(id);
@@ -460,7 +453,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 _this.ctx.lineWidth = _this.lineWidth;
                 _this.ctx.strokeStyle = _this.color;
                 // calculate incremental points along the path
-                var points = calcWaypoints(vertices);
+                var points = _this.calcWaypoints(vertices);
                 // extend the line from start to finish with animation
                 var animate = function () {
                     if (t < points.length - 1) {
@@ -510,7 +503,10 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             this._initView(this.view);
         };
         MotionLayer.prototype.zoomTo = function () {
-            this.view.extent = this.CustomExtent;
+            if (this.CustomExtent) {
+                this.view.extent = this.CustomExtent;
+            }
+            ;
         };
         MotionLayer.prototype.simplify = function (points, tolerance, highestQuality) {
             /*
@@ -537,15 +533,16 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 if (sqDist > maxSqDist) {
                     index = i;
                     maxSqDist = sqDist;
+                    if (maxSqDist > sqTolerance) {
+                        if (index - first > 1)
+                            this.simplifyDPStep(points, first, index, sqTolerance, simplified);
+                        simplified.push(points[index]);
+                        if (last - index > 1)
+                            this.simplifyDPStep(points, index, last, sqTolerance, simplified);
+                    }
                 }
             }
-            if (maxSqDist > sqTolerance) {
-                if (index - first > 1)
-                    this.simplifyDPStep(points, first, index, sqTolerance, simplified);
-                simplified.push(points[index]);
-                if (last - index > 1)
-                    this.simplifyDPStep(points, index, last, sqTolerance, simplified);
-            }
+            ;
         };
         // simplification using Ramer-Douglas-Peucker algorithm
         MotionLayer.prototype.simplifyDouglasPeucker = function (points, sqTolerance) {
@@ -620,4 +617,3 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
     }(decorators_1.declared(Layer)));
     exports.MotionLayer = MotionLayer;
 });
-//# sourceMappingURL=motion-module.js.map

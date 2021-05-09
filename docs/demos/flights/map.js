@@ -1,4 +1,4 @@
-define(["require", "exports", "esri/Map", "esri/views/MapView", "./../../motion-module.js", "../../data/flights/TY7.js", "../../data/flights/DLH414.js", "../../data/flights/UAL925.js", "../../data/flights/UAL1140.js", "../../data/flights/UAL933.js", "../../data/flights/UAL1133.js", "../../data/flights/UAL3872.js", "../../data/flights/UAL1669.js"], function (require, exports, EsriMap, MapView, Motion, TY7, DLH414, UAL925, UAL1140, UAL933, UAL1133, UAL3872, UAL1669) {
+define(["require", "exports", "esri/Map", "esri/views/MapView", "../../../dist/motion-module.js", "../../data/flights/TY7.js", "../../data/flights/DLH414.js", "../../data/flights/UAL925.js", "../../data/flights/UAL1140.js", "../../data/flights/UAL933.js", "../../data/flights/UAL1133.js", "../../data/flights/UAL3872.js", "../../data/flights/UAL1669.js"], function (require, exports, EsriMap, MapView, Motion, TY7, DLH414, UAL925, UAL1140, UAL933, UAL1133, UAL3872, UAL1669) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var map = new EsriMap({
@@ -72,4 +72,3 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "./../../motion-
         clockCTX.fillText(date.toLocaleString(), 100, 100);
     });
 });
-//# sourceMappingURL=map.js.map
