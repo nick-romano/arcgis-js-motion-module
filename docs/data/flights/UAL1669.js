@@ -1,6 +1,7 @@
 define(["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.UAL1669 = void 0;
     var UAL1669 = {
         "type": "FeatureCollection",
         "features": [
@@ -840,4 +841,3 @@ define(["require", "exports"], function (require, exports) {
     };
     exports.UAL1669 = UAL1669;
 });
-//# sourceMappingURL=UAL1669.js.map

@@ -1,6 +1,7 @@
 define(["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    exports.data3 = void 0;
     var data3 = {
         "type": "FeatureCollection",
         "features": [
@@ -1611,4 +1612,3 @@ define(["require", "exports"], function (require, exports) {
     };
     exports.data3 = data3;
 });
-//# sourceMappingURL=data3.js.map

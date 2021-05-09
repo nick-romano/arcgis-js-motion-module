@@ -1,10 +1,9 @@
 var express = require('express')
 var http = require('http')
 var path = require('path')
-var reload = require('reload')
 var bodyParser = require('body-parser')
 var logger = require('morgan')
-var watch = require('watch')
+var chokidar = require('chokidar')
 var sockjs = require('sockjs');
 var http = require('http');
 
@@ -13,23 +12,13 @@ var app = express();
 var sockjs_opts = { sockjs_url: "http://cdn.jsdelivr.net/sockjs/1.0.1/sockjs.min.js" };
 var sockjs_echo = sockjs.createServer(sockjs_opts);
 sockjs_echo.on('connection', function (conn) {
+    console.log('yo')
     conn.on('data', function (message) {
-        conn.write(message);
-        watch.createMonitor(__dirname + "/app", function (monitor) {
-            monitor.files['main.js'] // Stat object for my zshrc.
-            monitor.on("created", function (f, stat) {
-                // Handle new files
-            })
-            monitor.on("changed", function (f, curr, prev) {
-                // Handle file changes
-                console.log("a file has changed")
-                setTimeout(() => {
-                    conn.write('reload')
-                }, 10)
-            })
-            monitor.on("removed", function (f, stat) {
-
-            })
+        chokidar.watch(__dirname + "/app").on('change', function (event, path) {
+            console.log("a file has changed")
+            setTimeout(() => {
+                conn.write('reload')
+            }, 10)
         })
     });
 });
@@ -37,24 +26,25 @@ sockjs_echo.on('connection', function (conn) {
 
 var publicDir = path.join(__dirname, 'app')
 var docDir = path.join(__dirname, 'docs')
+var distDir = path.join(__dirname, 'dist');
+
 
 app.set('port', process.env.PORT || 3000)
 app.use(logger('dev'))
 app.use(bodyParser.json()) // Parses json, multi-part (file), url-encoded 
 
-app.use(express.static('app'));
-app.get('/', function (req, res) {
-    res.sendFile(path.join(publicDir, 'index.html'))
+app.use(express.static("dist"));
+app.get('/dist/*', function(req, res) {
+    res.sendFile(path.join(__dirname, req.path))
 })
 
 app.use(express.static('docs'));
-app.get('/docs/', function (req, res) {
-    res.sendFile(path.join(docDir, 'index.html'))
+app.get('/docs/*', function (req, res) {
+    console.log(req.path)
+    res.sendFile(path.join(__dirname, req.path))
 })
 
-var server = http.createServer(app)
-
-reloadServer = reload(app);
+var server = http.createServer(app);
 
 
 sockjs_echo.installHandlers(server, { prefix: '/echo' });
