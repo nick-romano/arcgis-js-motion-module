@@ -1,15 +1,12 @@
 import Layer = require("esri/layers/Layer");
-import LayerView = require("esri/views/layers/LayerView");
 import SimpleLineSymbol = require("esri/symbols/SimpleLineSymbol");
 import SimpleMarkerSymbol = require("esri/symbols/SimpleMarkerSymbol");
 import GraphicsLayer = require("esri/layers/GraphicsLayer")
 import Graphic = require("esri/Graphic");
 import Extent = require("esri/geometry/Extent");
 import MapView = require("esri/views/MapView")
-import { Point, Polygon, Polyline } from "esri/geometry";
+import { Point, Polyline } from "esri/geometry";
 import { subclass, property, declared } from "esri/core/accessorSupport/decorators";
-import watchUtils = require("esri/core/watchUtils");
-import Collection = require("esri/core/Collection");
 
 export interface source {
     features: Array<object>
@@ -67,6 +64,7 @@ class MotionLayer extends declared(Layer) {
     labelField: string;
     shadowBlur: boolean;
     anFrame: number;
+    colorPalette: string[] = ["#8A4850", "#89516A"] // "#7C6082", "#647091", "#447F95", "#2C8C8D", "#36967B", "#589C63", "#809F4E", "#A99E42", "#D29A48", "#F49361"];
 
 
 
@@ -74,7 +72,6 @@ class MotionLayer extends declared(Layer) {
         super()
         this.source = args["source"]
         this.catField = args["catField"] ? args["catField"] : undefined;
-        console.log(args.view);
         this.view = args["view"];
         this.mapView = this.view;
         this.speed = args["speed"] ? args["speed"] : 1;
@@ -169,7 +166,7 @@ class MotionLayer extends declared(Layer) {
                 size: 16,
             })
 
-            PointFeatures.map((r: any) => {
+            PointFeatures.forEach((r: any) => {
                 r.geometry = new Point(r.coordinates),
                     r.type = "Point",
                     // ! set up polyfill for attributes
@@ -189,22 +186,30 @@ class MotionLayer extends declared(Layer) {
             // console.log(allValues)
             const catFields = allValues.filter((v: any, i: any, a: any) => a.indexOf(v) === i);
             const catColorArray: { [item: string]: string } = {};
+            const uniqueColorsAssigned: string[] = [];
 
-            const getColor = () => {
-                for (var i = 0; i < 100; i++) {
-                    const color = this.randomColor();
-                    if (!(color in categories)) {
-                        return color;
+            const getColor = (tries: number = 0): string => {
+                const color = this.randomColor();
+                if(uniqueColorsAssigned.indexOf(color) === -1) {
+                    uniqueColorsAssigned.push(color)
+                    return color;
+                } else {
+                    if(tries < this.colorPalette.length) {
+                        // will try to get unique colors;
+                        return getColor(tries + 1);
                     } else {
-                        return 'black';
-                    };
-                };
+                        // but if theres too many colors needed, we re-use existing colors;
+                        console.log('reusing')
+                        return this.randomColor();
+                    }
+                    
+                }
             }
 
 
             catFields.forEach((r: string) => {
                 // const FinalColor = getColor();
-                catColorArray[r] = this.randomColor();
+                catColorArray[r] = getColor();
             });
 
             if (this.catField !== undefined) {
@@ -317,17 +322,25 @@ class MotionLayer extends declared(Layer) {
             // this.view.extent = layer.LayerLines.graphics.items[i].geometry.extent;
             if (i > this.state.segment - 1) {
 
+                const graphic = this.LayerLines!.graphics.getItemAt(i);
+
                 if (this.categories !== undefined && this.catField) {
-                    const category = this.LayerLines!.graphics.getItemAt(i).attributes[this.catField];
+                    const category = graphic.attributes[this.catField];
                     this.setColor(this.categories[category]);
                 }
 
-                if (this.LayerLines!.graphics.getItemAt(i).attributes.velocity) {
-                    this.setSpeed(this.LayerLines!.graphics.getItemAt(i).attributes.velocity * .5);
+                if (graphic.attributes.velocity) {
+                    // this.setSpeed(this.LayerLines!.graphics.getItemAt(i).attributes.velocity * .5);
                 };
 
-                const geom = this.LayerLines!.graphics.getItemAt(i).geometry as Polyline;
-                await this._addVertexes(geom.paths[0], undefined, undefined);
+                const geom = graphic.geometry as Polyline;
+                let color = this.color;
+                if(this.catField) {
+                    const category = graphic.attributes[this.catField];
+                    color = category ? this.categories[category] : this.color;
+                }
+
+                await this._addVertexes(geom.paths[0], graphic, undefined, color);
                 this.state.segment += 1;
                 //console.log('segment +1');
                 this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height)
@@ -347,6 +360,7 @@ class MotionLayer extends declared(Layer) {
             const tempArray: ExtendedScreenPoint[] = [];
             const graphic = this.LayerLines!.graphics.getItemAt(i);
             const geom = graphic.geometry as Polyline;
+            
             for (var j = 0; j < geom.paths[0].length; j++) {
                 if (this.categories !== undefined && this.catField) {
                     const category = this.LayerLines!.graphics.getItemAt(i).attributes[this.catField];
@@ -379,26 +393,15 @@ class MotionLayer extends declared(Layer) {
     }
 
     private _draw(g: any) {
-
         this.ctx.beginPath();
         var g = this.simplify(g, 4, false);
         for (var i = 0; i < g.length; i++) {
             this.ctx.moveTo(g[i][0].x, g[i][0].y);
-            // for (var j = 0; j < g[i].length - 1; j++) {
-            //     this.ctx.quadraticCurveTo(g[i][j].x, g[i][j].y, g[i][j+1].x, g[i][j+1].y);
-            //     if (j === 0) {
-            //         // this.ctx.fillText(g[i][j].attribute, g[i][j].x, g[i][j].y)
-            //     } 
-            // }
-
             for (var j = 0; j < g[i].length; j++) {
                 this.ctx.lineTo(g[i][j].x, g[i][j].y);
-                if (j === 0) {
-
-                }
             }
         }
-        // console.log(g)
+
         this.categories ? this.ctx.strokeStyle = g[0][0].vectorColor : undefined;
         // this.ctx.lineCap = 'round';
         //this.ctx.lineJoin = 'round';
@@ -407,14 +410,16 @@ class MotionLayer extends declared(Layer) {
         this.ctx.stroke();
         this.ctx.shadowBlur = 2;
         this.ctx.shadowColor = 'white';
-        this.labelField ? this.ctx.fillText(g[0][0].attribute, g[0][0].x, g[0][0].y) : undefined;
+        this.labelField && this.ctx.fillText(g[0][0].attribute, g[0][0].x, g[0][0].y);
     }
 
-    private _addVertexes(vertexArray: any, event: any, change: any) {
+    private _addVertexes(vertexArray: any, graphic: __esri.Graphic, change: any, color: string) {
         return new Promise<string>((resolve, reject) => {
             const g = vertexArray.map((r: any) => {
                 return this.mapView.toScreen(new Point(r));
             });
+
+            this.labelField && this.ctx.fillText(graphic.attributes[this.labelField], g[0].x, g[0].y)
 
             var length = 0;
             for (var i = 0; i < g.length; i++) {
@@ -423,7 +428,7 @@ class MotionLayer extends declared(Layer) {
                     length += distance;
                 }
             };
-            this._animate(g).then((r: any) => resolve(r));
+            this._animate(g, color).then((r: any) => resolve(r));
         })
     }
 
@@ -451,7 +456,7 @@ class MotionLayer extends declared(Layer) {
         return (waypoints);
     };
 
-    private _animate(g: Array<Point>) {
+    private _animate(g: Array<Point>, color: string) {
         // calc waypoints traveling along vertices
 
         return new Promise<string>((resolve, reject) => {
@@ -480,13 +485,12 @@ class MotionLayer extends declared(Layer) {
 
             // set some style
             this.ctx.lineWidth = this.lineWidth;
-            this.ctx.strokeStyle = this.color;
+            this.ctx.strokeStyle = color;
             // calculate incremental points along the path
             var points = this.calcWaypoints(vertices);
             // extend the line from start to finish with animation
 
-
-
+            // this.labelField && this.ctx.fillText(g[0][0].attribute, g[0][0].x, g[0][0].y);
             let animate = () => {
                 if (t < points.length - 1) {
                     // this.ctx.strokeStyle = this.randomColor();
@@ -511,8 +515,9 @@ class MotionLayer extends declared(Layer) {
     }
 
     private randomColor() {
-        var color = ["#ffc107", "#e91e63", "#673ab7", "#2196f3", "#4caf50", "#ffeb3b"]
-        return color[Math.floor(Math.random() * 6)];
+        var color = this.colorPalette;
+        console.log(Math.floor(Math.random() * color.length))
+        return color[Math.floor(Math.random() * color.length)];
     }
 
     public setSpeed(speed: number) {

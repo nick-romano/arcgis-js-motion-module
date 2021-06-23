@@ -49,6 +49,7 @@ declare class MotionLayer extends MotionLayer_base {
     labelField: string;
     shadowBlur: boolean;
     anFrame: number;
+    colorPalette: string[];
     constructor(args: IMotionLayer);
     createLayerLines(): GraphicsLayer | undefined;
     get features(): object;

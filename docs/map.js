@@ -9,7 +9,7 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "../dist/motion-
         map: map,
         container: "viewDiv",
         center: [-76.93, 38.9897],
-        zoom: 9
+        zoom: 16
     });
     view.when(function () {
         // var layer = new Motion.MotionLayer({
@@ -50,5 +50,6 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "../dist/motion-
         });
         layer3.addToMap();
         layer3.zoomTo();
+        view.zoom = 14
     });
 });

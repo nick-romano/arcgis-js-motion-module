@@ -55,10 +55,26 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbol", "esri/symbols/SimpleMarkerSymbol", "esri/layers/GraphicsLayer", "esri/Graphic", "esri/geometry/Extent", "esri/geometry", "esri/core/accessorSupport/decorators"], function (require, exports, Layer, SimpleLineSymbol, SimpleMarkerSymbol, GraphicsLayer, Graphic, Extent, geometry_1, decorators_1) {
+(function (factory) {
+    if (typeof module === "object" && typeof module.exports === "object") {
+        var v = factory(require, exports);
+        if (v !== undefined) module.exports = v;
+    }
+    else if (typeof define === "function" && define.amd) {
+        define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbol", "esri/symbols/SimpleMarkerSymbol", "esri/layers/GraphicsLayer", "esri/Graphic", "esri/geometry/Extent", "esri/geometry", "esri/core/accessorSupport/decorators"], factory);
+    }
+})(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.MotionLayer = exports.ESourceType = void 0;
+    var Layer = require("esri/layers/Layer");
+    var SimpleLineSymbol = require("esri/symbols/SimpleLineSymbol");
+    var SimpleMarkerSymbol = require("esri/symbols/SimpleMarkerSymbol");
+    var GraphicsLayer = require("esri/layers/GraphicsLayer");
+    var Graphic = require("esri/Graphic");
+    var Extent = require("esri/geometry/Extent");
+    var geometry_1 = require("esri/geometry");
+    var decorators_1 = require("esri/core/accessorSupport/decorators");
     var ESourceType;
     (function (ESourceType) {
         ESourceType["GEOJSON"] = "GEOJSON";
@@ -75,9 +91,9 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         __extends(MotionLayer, _super);
         function MotionLayer(args) {
             var _this = _super.call(this) || this;
+            _this.colorPalette = ["#8A4850", "#89516A"]; // "#7C6082", "#647091", "#447F95", "#2C8C8D", "#36967B", "#589C63", "#809F4E", "#A99E42", "#D29A48", "#F49361"];
             _this.source = args["source"];
             _this.catField = args["catField"] ? args["catField"] : undefined;
-            console.log(args.view);
             _this.view = args["view"];
             _this.mapView = _this.view;
             _this.speed = args["speed"] ? args["speed"] : 1;
@@ -167,7 +183,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                     color: "black",
                     size: 16,
                 });
-                PointFeatures.map(function (r) {
+                PointFeatures.forEach(function (r) {
                     r.geometry = new geometry_1.Point(r.coordinates),
                         r.type = "Point",
                         // ! set up polyfill for attributes
@@ -186,22 +202,29 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 // console.log(allValues)
                 var catFields = allValues.filter(function (v, i, a) { return a.indexOf(v) === i; });
                 var catColorArray_1 = {};
-                var getColor = function () {
-                    for (var i = 0; i < 100; i++) {
-                        var color = _this.randomColor();
-                        if (!(color in categories)) {
-                            return color;
+                var uniqueColorsAssigned_1 = [];
+                var getColor_1 = function (tries) {
+                    if (tries === void 0) { tries = 0; }
+                    var color = _this.randomColor();
+                    if (uniqueColorsAssigned_1.indexOf(color) === -1) {
+                        uniqueColorsAssigned_1.push(color);
+                        return color;
+                    }
+                    else {
+                        if (tries < _this.colorPalette.length) {
+                            // will try to get unique colors;
+                            return getColor_1(tries + 1);
                         }
                         else {
-                            return 'black';
+                            // but if theres too many colors needed, we re-use existing colors;
+                            console.log('reusing');
+                            return _this.randomColor();
                         }
-                        ;
                     }
-                    ;
                 };
                 catFields.forEach(function (r) {
                     // const FinalColor = getColor();
-                    catColorArray_1[r] = _this.randomColor();
+                    catColorArray_1[r] = getColor_1();
                 });
                 if (this.catField !== undefined) {
                     return catColorArray_1;
@@ -293,7 +316,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
         };
         MotionLayer.prototype.loopSegments = function () {
             return __awaiter(this, void 0, void 0, function () {
-                var i, category, geom;
+                var i, graphic, category, geom, color, category;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -302,16 +325,22 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                         case 1:
                             if (!(i < this.LayerLines.graphics.length)) return [3 /*break*/, 4];
                             if (!(i > this.state.segment - 1)) return [3 /*break*/, 3];
+                            graphic = this.LayerLines.graphics.getItemAt(i);
                             if (this.categories !== undefined && this.catField) {
-                                category = this.LayerLines.graphics.getItemAt(i).attributes[this.catField];
+                                category = graphic.attributes[this.catField];
                                 this.setColor(this.categories[category]);
                             }
-                            if (this.LayerLines.graphics.getItemAt(i).attributes.velocity) {
-                                this.setSpeed(this.LayerLines.graphics.getItemAt(i).attributes.velocity * .5);
+                            if (graphic.attributes.velocity) {
+                                // this.setSpeed(this.LayerLines!.graphics.getItemAt(i).attributes.velocity * .5);
                             }
                             ;
-                            geom = this.LayerLines.graphics.getItemAt(i).geometry;
-                            return [4 /*yield*/, this._addVertexes(geom.paths[0], undefined, undefined)];
+                            geom = graphic.geometry;
+                            color = this.color;
+                            if (this.catField) {
+                                category = graphic.attributes[this.catField];
+                                color = category ? this.categories[category] : this.color;
+                            }
+                            return [4 /*yield*/, this._addVertexes(geom.paths[0], graphic, undefined, color)];
                         case 2:
                             _a.sent();
                             this.state.segment += 1;
@@ -366,19 +395,10 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             var g = this.simplify(g, 4, false);
             for (var i = 0; i < g.length; i++) {
                 this.ctx.moveTo(g[i][0].x, g[i][0].y);
-                // for (var j = 0; j < g[i].length - 1; j++) {
-                //     this.ctx.quadraticCurveTo(g[i][j].x, g[i][j].y, g[i][j+1].x, g[i][j+1].y);
-                //     if (j === 0) {
-                //         // this.ctx.fillText(g[i][j].attribute, g[i][j].x, g[i][j].y)
-                //     } 
-                // }
                 for (var j = 0; j < g[i].length; j++) {
                     this.ctx.lineTo(g[i][j].x, g[i][j].y);
-                    if (j === 0) {
-                    }
                 }
             }
-            // console.log(g)
             this.categories ? this.ctx.strokeStyle = g[0][0].vectorColor : undefined;
             // this.ctx.lineCap = 'round';
             //this.ctx.lineJoin = 'round';
@@ -387,14 +407,15 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             this.ctx.stroke();
             this.ctx.shadowBlur = 2;
             this.ctx.shadowColor = 'white';
-            this.labelField ? this.ctx.fillText(g[0][0].attribute, g[0][0].x, g[0][0].y) : undefined;
+            this.labelField && this.ctx.fillText(g[0][0].attribute, g[0][0].x, g[0][0].y);
         };
-        MotionLayer.prototype._addVertexes = function (vertexArray, event, change) {
+        MotionLayer.prototype._addVertexes = function (vertexArray, graphic, change, color) {
             var _this = this;
             return new Promise(function (resolve, reject) {
                 var g = vertexArray.map(function (r) {
                     return _this.mapView.toScreen(new geometry_1.Point(r));
                 });
+                _this.labelField && _this.ctx.fillText(graphic.attributes[_this.labelField], g[0].x, g[0].y);
                 var length = 0;
                 for (var i = 0; i < g.length; i++) {
                     if (i < g.length - 1) {
@@ -403,7 +424,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                     }
                 }
                 ;
-                _this._animate(g).then(function (r) { return resolve(r); });
+                _this._animate(g, color).then(function (r) { return resolve(r); });
             });
         };
         MotionLayer.prototype.calcWaypoints = function (vertices) {
@@ -429,7 +450,7 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             return (waypoints);
         };
         ;
-        MotionLayer.prototype._animate = function (g) {
+        MotionLayer.prototype._animate = function (g, color) {
             // calc waypoints traveling along vertices
             var _this = this;
             return new Promise(function (resolve, reject) {
@@ -451,10 +472,11 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
                 });
                 // set some style
                 _this.ctx.lineWidth = _this.lineWidth;
-                _this.ctx.strokeStyle = _this.color;
+                _this.ctx.strokeStyle = color;
                 // calculate incremental points along the path
                 var points = _this.calcWaypoints(vertices);
                 // extend the line from start to finish with animation
+                // this.labelField && this.ctx.fillText(g[0][0].attribute, g[0][0].x, g[0][0].y);
                 var animate = function () {
                     if (t < points.length - 1) {
                         // this.ctx.strokeStyle = this.randomColor();
@@ -478,8 +500,9 @@ define(["require", "exports", "esri/layers/Layer", "esri/symbols/SimpleLineSymbo
             });
         };
         MotionLayer.prototype.randomColor = function () {
-            var color = ["#ffc107", "#e91e63", "#673ab7", "#2196f3", "#4caf50", "#ffeb3b"];
-            return color[Math.floor(Math.random() * 6)];
+            var color = this.colorPalette;
+            console.log(Math.floor(Math.random() * color.length));
+            return color[Math.floor(Math.random() * color.length)];
         };
         MotionLayer.prototype.setSpeed = function (speed) {
             this.speed = speed;
