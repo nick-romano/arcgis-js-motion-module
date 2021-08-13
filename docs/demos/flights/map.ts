@@ -1,7 +1,7 @@
 import EsriMap = require("esri/Map");
 import MapView = require("esri/views/MapView");
 import FeatureLayer = require("esri/layers/FeatureLayer");
-import Motion = require("./../../motion-module.js");
+import Motion = require("../../motion-module.js");
 import { Point, Polygon, Polyline } from "esri/geometry";
 import lang = require("dojo/_base/lang");
 

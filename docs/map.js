@@ -1,4 +1,4 @@
-define(["require", "exports", "esri/Map", "esri/views/MapView", "../dist/motion-module.js", "./data/data.js", "./data/data2.js", "./data/data3.js"], function (require, exports, EsriMap, MapView, Motion, data, data2, data3) {
+define(["require", "exports", "esri/Map", "esri/views/MapView", "./motion-module.js", "./data/data.js", "./data/data2.js", "./data/data3.js"], function (require, exports, EsriMap, MapView, Motion, data, data2, data3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var map = new EsriMap({
