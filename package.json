@@ -19,7 +19,7 @@
   "devDependencies": {
     "@types/d3": "^6.3.0",
     "dojo-typings": "^1.11.11",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "morgan": "^1.10.0",
     "tslint": "^6.1.3"
   },
